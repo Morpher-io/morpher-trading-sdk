@@ -1,0 +1,35 @@
+{
+  "name": "morpher-trading-sdk",
+  "private": false,
+  "version": "0.1.0",
+  "type": "module",
+  "main": "./dist/morpher-trading-sdk.umd.cjs",
+  "module": "./dist/morpher-trading-sdk.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/morpher-trading-sdk.js",
+      "require": "./dist/morpher-trading-sdk.umd.cjs",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "vite build",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@trpc/client": "^11.4.2",
+    "graphql-ws": "^6.0.5",
+    "viem": "^2.31.7"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^1.8.0",
+    "@trpc/server": "^11.4.2",
+    "typescript": "^5.4.5",
+    "vite": "^5.2.11",
+    "vite-plugin-dts": "^3.9.1"
+  }
+}
