@@ -18,12 +18,17 @@
   ],
   "scripts": {
     "build": "vite build",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "lint": "biome lint .",
+    "format": "biome format --write ."
+  },
+  "peerDependencies": {
+    "viem": "^2.31.7"
   },
   "dependencies": {
     "@trpc/client": "^11.4.2",
-    "graphql-ws": "^6.0.5",
-    "viem": "^2.31.7"
+    "abstractionkit": "^0.2.21",
+    "graphql-ws": "^6.0.5"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.8.0",

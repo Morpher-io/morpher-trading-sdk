@@ -135,6 +135,50 @@ export declare const v2Router: trpc.TRPCBuiltRouter<{
         }[];
         meta: object;
     }>;
+    /**
+     * Get the current value of the given position to be validated when the user created their close order
+     */
+    getPositionValue: trpc.TRPCQueryProcedure<{
+        input: {
+            eth_address: string;
+            market_id?: string | undefined;
+        } | undefined;
+        output: Position | undefined;
+        meta: object;
+    }>;
+    /**
+ * Get the current value of the given position to be validated when the user created their close order
+ */
+    getPositionSplitValue: trpc.TRPCQueryProcedure<{
+        input: {
+            eth_address: string;
+            market_id: string;
+            price_above: string;
+            price_below: string;
+        } | undefined;
+        output: {
+            eth_address: `0x${string}`;
+            market_id: string;
+            price_above: string;
+            price_below: string;
+            price_multiplier: number;
+            splits: any[];
+        };
+        meta: object;
+    }>;
+    getConfig: trpc.TRPCQueryProcedure<{
+        input: void;
+        output: {
+            chain_id: number;
+            tokenAddress: `0x${string}`;
+            usdcAddress: `0x${string}`;
+            stateAddress: `0x${string}`;
+            oracleAddress: `0x${string}`;
+            bundler: string;
+            paymaster: string;
+        };
+        meta: object;
+    }>;
 }>>;
 export type V2RouterDefinition = typeof v2Router;
 export {};
