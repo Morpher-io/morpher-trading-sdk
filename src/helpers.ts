@@ -155,6 +155,277 @@ export const sendCreateOrderGasToken = async (walletClient: WalletClient, public
 				
 }
 
+const getOracleCancelCallPermitCallData = async (walletClient: WalletClient, account: Account, oracle_address: TAddress, nonce: bigint, deadline: bigint, order_id: string) => {
+    try {
+
+
+
+        const chainId = walletClient.chain?.id || 1; // Default to mainnet if chain ID is not available
+
+        // set the domain parameters
+        const domain = {
+            name: "MorpherOracle",
+            version: "1",
+            chainId: Number(chainId),
+            verifyingContract: oracle_address
+        };
+
+        // set the Permit type parameters
+        
+        const types = {
+            EIP712Domain: [
+                {
+                    name: 'name',
+                    type: 'string',
+                },
+                {
+                    name: 'version',
+                    type: 'string',
+                },
+                {
+                    name: 'chainId',
+                    type: 'uint256',
+                },
+                {
+                    name: 'verifyingContract',
+                    type: 'address',
+                },
+            ],
+            Person: [
+                {
+                    name: 'name',
+                    type: 'string',
+                },
+                {
+                    name: 'wallet',
+                    type: 'address',
+                },
+            ],
+            CancelOrder: [{
+                name: "_orderId",
+                type: "bytes32"
+            },
+            {
+                name: "_msgSender",
+                type: "address"
+            },
+            {
+                name: "nonce",
+                type: "uint256"
+            },
+            {
+                name: "deadline",
+                type: "uint256"
+            },
+            ],
+        };
+
+
+        // set the Permit type values
+        
+        const values = {
+            _orderId: order_id,
+            _msgSender: getAddress(account.address || ''),
+            nonce: nonce.toString(),
+            deadline: deadline.toString(),
+        };
+
+        const signature = await walletClient.signTypedData({
+            account:account.address,
+            domain: domain as any,
+            types,
+            primaryType: 'CancelOrder',
+            message: values,
+        });
+
+
+
+        if (signature) {
+            const hexToSig = await parseSignature(signature);
+            const oracleCalldata = encodeFunctionData({
+                abi: morpherOracleAbi,
+                functionName: "initiateCancelOrderPermitted",
+                args: [
+                        order_id as TAddress, account.address as TAddress, deadline, Number(hexToSig.v), hexToSig.r, hexToSig.s]
+            })
+
+
+            return oracleCalldata;
+
+        }
+        return "0x";
+    } catch (err) {
+        console.log('error in getOracleCancelCallPermitCallData', err)
+        return "0x";
+    }
+}
+
+export const sendCancelOrderGasless = async (walletClient: WalletClient, publicClient: PublicClient, account: Account, oracle_address: TAddress, bundler: string, paymasterAddress: string, order_id: string, currentTimestamp: number) => {
+    const tx_hash = '';
+    const submit_date = Date.now()
+    
+
+    try {
+
+        let smartAccount = SafeAccount.initializeNewAccount(
+            [account.address.toLowerCase()],
+        );
+        
+        const oracleContract = getContract({
+            abi: morpherOracleAbi,
+            address: oracle_address,
+            client: { public: publicClient, wallet: walletClient },
+        });
+
+        const nonce: any = await oracleContract.read.nonces([account.address as TAddress]);
+
+  
+        const deadline = BigInt(Math.round(currentTimestamp/1000) + 180);
+
+
+        const oracleCallPermitCalldata = await getOracleCancelCallPermitCallData(walletClient,account, oracle_address, nonce, deadline, order_id);
+
+        
+
+        if (!oracleCallPermitCalldata || oracleCallPermitCalldata == "0x") {
+            throw new Error(`ORACLE_CALL_GENERATION_FAILED`);
+        }
+
+
+        const transaction :MetaTransaction ={
+            to: oracle_address,
+            value: 0n,
+            data: oracleCallPermitCalldata,
+        }
+
+
+        //createUserOperation will determine the nonce, fetch the gas prices,
+        //estimate gas limits and return a useroperation to be signed.
+        //you can override all these values using the overrides parameter.
+        let userOperation = await smartAccount.createUserOperation(
+            [   
+                transaction, //transaction2,
+            ],
+            publicClient.transport.url, //the node rpc is used to fetch the current nonce and fetch gas prices.
+            bundler, //the bundler rpc is used to estimate the gas limits.
+        )
+
+
+        const sponsorshipPolicyId = ''
+
+        
+        let paymaster: CandidePaymaster = new CandidePaymaster(
+            paymasterAddress
+        )
+
+        let [paymasterUserOperation, _sponsorMetadata] = await paymaster.createSponsorPaymasterUserOperation(
+            userOperation, bundler, sponsorshipPolicyId) // sponsorshipPolicyId will have no effect if empty
+        userOperation = paymasterUserOperation; 
+
+        //console.log('paymasterUserOperation', paymasterUserOperation);
+
+        const cost = calculateUserOperationMaxGasCost(paymasterUserOperation)
+        const chainId = walletClient.chain?.id || 1; // Default to mainnet if chain ID is not available
+
+        let userOperationData = SafeAccount.getUserOperationEip712Data(
+            paymasterUserOperation,
+            BigInt(chainId),
+            {
+                validAfter: BigInt(0),
+                validUntil: BigInt(0),
+                entrypointAddress: smartAccount.entrypointAddress,
+                safe4337ModuleAddress: smartAccount.safe4337ModuleAddress,
+            },
+        );
+
+
+
+        const signature = await walletClient.signTypedData({
+            account: account.address,
+            domain:userOperationData.domain as any,
+            types:userOperationData.types,
+            primaryType: 'SafeOp',
+            message: userOperationData.messageValue as any,
+        });
+
+
+
+        paymasterUserOperation.signature = SafeAccount.formatEip712SignaturesToUseroperationSignature([account.address as TAddress],
+            [signature],
+            {
+                validAfter: BigInt(0),
+                validUntil: BigInt(0),
+            },);
+
+
+
+        //use the bundler rpc to send a userOperation
+        //sendUserOperation will return a SendUseroperationResponse object
+        //that can be awaited for the useroperation to be included onchain
+        const sendUserOperationResponse = await smartAccount.sendUserOperation(
+            paymasterUserOperation, bundler || ''
+        );
+
+        console.log("Useroperation sent. Waiting to be included ......")
+        //included will return a UserOperationReceiptResult when 
+        //useroperation is included onchain
+        let userOperationReceiptResult = await sendUserOperationResponse.included()
+
+        console.log("Useroperation receipt received.")
+        console.log(userOperationReceiptResult)
+        if(userOperationReceiptResult.success){
+            console.log("Order cancel user operation successful. The transaction hash is : " + userOperationReceiptResult.receipt.transactionHash)
+        }else{
+            console.log("Useroperation execution failed")
+        }
+
+        console.log('cost', cost)
+
+
+        return true
+
+    } catch (err: any) {
+        console.log('err', err.toString())
+        throw new Error(`Transaction failed: ${formatError(err)}`);
+    }
+
+
+}
+
+export const sendCancelOrderDirect = async (walletClient: WalletClient, publicClient: PublicClient, account: Account, oracle_address: TAddress, order_id: TAddress) => {
+    let tx_hash: any = null;
+
+    try {
+         const morpherOracleContract = getContract({
+            abi: morpherOracleAbi,
+            address: oracle_address,
+            client: { public: publicClient, wallet: walletClient },
+        });
+
+
+        const transaction_hash = await morpherOracleContract.write
+                        .initiateCancelOrder([order_id]
+                            , { chain: publicClient.chain, gas: BigInt(800000), account: account.address as TAddress }
+
+                        )
+
+        tx_hash = transaction_hash;
+    
+        const receipt = await publicClient.waitForTransactionReceipt({ hash: transaction_hash })
+
+        if (receipt.status !== 'success') {
+            throw new Error(`Transaction failed with status: ${receipt.status}`);
+        }
+
+        return { transaction_hash: tx_hash, order_id: order_id }
+
+    } catch (err: any) {
+        console.log('err', err.toString())
+        throw new Error(`Transaction failed: ${formatError(err)}`);
+    }
+
+}
+
 export const sendCreateOrderDirect = async (walletClient: WalletClient, publicClient: PublicClient, account: Account, oracle_address: TAddress, market: string, close_shares_amount: any, open_mph_token_amount: any, direction: boolean, leverage: any, priceAbove: any, priceBelow: any, good_until: any, good_from: any, timeOut: any, submit_date: any, transaction_data: any) => {
 
     let tx_hash = '';
@@ -233,8 +504,6 @@ export const sendCreateOrderDirect = async (walletClient: WalletClient, publicCl
     }
 
 }
-
-
 
 const getOracleCallPermitCalldata = async (walletClient: WalletClient, account: Account, oracle_address: TAddress, nonce: bigint, deadline: bigint, market: string, close_shares_amount: any, open_mph_token_amount: any, direction: any, leverage: any, priceAbove: any, priceBelow: any, good_until: any, good_from: any) => {
     try {

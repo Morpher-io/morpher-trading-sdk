@@ -5,15 +5,33 @@ import type {
   V2RouterDefinition,
   TMarketData,
   TMarketDetail,
-  
 } from "./v2.router";
-import { ContractPosition, TAddress, TCurrencyList, TExchangeRate, TMarketType, TTradeCallback } from "./types";
+import {
+  ContractPosition,
+  TAddress,
+  TCurrencyList,
+  TExchangeRate,
+  TMarketType,
+  TTradeCallback,
+} from "./types";
 import { Account, erc20Abi, PublicClient, WalletClient } from "viem";
-import { checkBalance, formatError, formatPosition, sendCreateOrderDirect, sendCreateOrderGasless, sendCreateOrderGasToken, sendCreateOrderToken, sendCreateOrderTokenGasless, soliditySha3 } from "./helpers";
+import {
+  checkBalance,
+  formatError,
+  formatPosition,
+  sendCancelOrderDirect,
+  sendCancelOrderGasless,
+  sendCreateOrderDirect,
+  sendCreateOrderGasless,
+  sendCreateOrderGasToken,
+  sendCreateOrderToken,
+  sendCreateOrderTokenGasless,
+  soliditySha3,
+} from "./helpers";
 import { morpherStateAbi } from "./abi";
-export type TradeCallback = TTradeCallback
-export type MarketDetail  = TMarketDetail
-export type TCurrency = 'MPH' | 'USDC' | 'ETH'
+export type TradeCallback = TTradeCallback;
+export type MarketDetail = TMarketDetail;
+export type TCurrency = "MPH" | "USDC" | "ETH";
 
 export default class MorpherTradeSDK {
   private endpoint: string;
@@ -29,22 +47,18 @@ export default class MorpherTradeSDK {
   private paymaster?: string;
   public ready: boolean = false;
 
-
   constructor(endpoint: string) {
     this.endpoint = endpoint;
     this.rpcClient = this.createTradingClient(this.endpoint);
     this.rpcClient.getConfig.query().then((config) => {
-      console.log('config', config)
-      this.stateAddress = config.stateAddress;  
+      this.stateAddress = config.stateAddress;
       this.oracleAddress = config.oracleAddress;
       this.usdcAddress = config.usdcAddress;
       this.tokenAddress = config.tokenAddress;
       this.bundler = config.bundler;
       this.paymaster = config.paymaster;
       this.ready = true;
-
-    })
-    
+    });
   }
 
   private createTradingClient<TRouter extends AnyRouter>(
@@ -152,18 +166,14 @@ export default class MorpherTradeSDK {
     return currencyList;
   }
 
-  
-
- async  getMarketList({
-  type,
-  }: {
-    type?: TMarketType;
-  }) {
+  async getMarketList({ type }: { type?: TMarketType }) {
     if (!this.rpcClient) {
       throw new Error("No RPC Client");
     }
 
-    const result = await this.rpcClient.getMarketList.query({ type: type || "stock" });
+    const result = await this.rpcClient.getMarketList.query({
+      type: type || "stock",
+    });
     return result.markets;
   }
 
@@ -213,43 +223,189 @@ export default class MorpherTradeSDK {
     return result;
   }
 
+  async getPositions({
+    eth_address,
+    market_id,
+    position_id,
+  }: {
+    eth_address: TAddress;
+    market_id?: string;
+    position_id?: string;
+  }) {
+    if (!this.rpcClient) {
+      throw new Error("No RPC Client");
+    }
+
+    const result = await this.rpcClient.getPositions.query({
+      eth_address,
+      market_id,
+      position_id,
+    });
+    return result;
+  }
+
   private unsubscribeFromMarket?: () => void;
 
   public subscribeToMarket(market_id: string, callback: any) {
-  const client = createClient({
-    url: this.clientURLWs,
-    retryAttempts: Infinity,
-    shouldRetry: () => true,
-    keepAlive: 10000,
-  });
+    const client = createClient({
+      url: this.clientURLWs,
+      retryAttempts: Infinity,
+      shouldRetry: () => true,
+      keepAlive: 10000,
+    });
 
-  if (this.unsubscribeFromMarket) {
-    this.unsubscribeFromMarket();
-  }
+    if (this.unsubscribeFromMarket) {
+      this.unsubscribeFromMarket();
+    }
 
-  this.unsubscribeFromMarket = client.subscribe(
-    {
-      query: `  subscription marketDataV2($market_id: String) {
+    this.unsubscribeFromMarket = client.subscribe(
+      {
+        query: `  subscription marketDataV2($market_id: String) {
           marketDataV2(market_id: $market_id)
         }`,
-      variables: { market_id },
-    },
-    {
-      next: (dat: any) => {
-        callback(dat?.data?.marketDataV2);
+        variables: { market_id },
       },
-      error: (err) => {
-        console.log("err", err);
-      },
-      complete: () => {},
-    }
-  );
-}
+      {
+        next: (dat: any) => {
+          callback(dat?.data?.marketDataV2);
+        },
+        error: (err) => {
+          console.log("err", err);
+        },
+        complete: () => {},
+      }
+    );
+  }
 
+  private unsubscribeFromOrder?: () => void;
+
+  public subscribeToOrder(eth_address: string, callback: any) {
+    const client = createClient({
+      url: this.clientURLWs,
+      retryAttempts: Infinity,
+      shouldRetry: () => true,
+      keepAlive: 10000,
+    });
+
+    if (this.unsubscribeFromOrder) {
+      this.unsubscribeFromOrder();
+    }
+
+    this.unsubscribeFromOrder = client.subscribe(
+      {
+        query: `  subscription orderExecutionV2($eth_address: String) {
+          orderExecutionV2(eth_address: $eth_address)
+        }`,
+        variables: { eth_address },
+      },
+      {
+        next: (dat: any) => {
+          console.log('order dat', dat )
+          callback(dat?.data?.orderExecutionV2);
+        },
+        error: (err) => {
+          console.log("err", err);
+        },
+        complete: () => {},
+      }
+    );
+  }
 
   private orderCreating: boolean = false;
   private orderCreatingTimeout?: NodeJS.Timeout;
 
+  async cancelOrder({
+    account,
+    walletClient,
+    publicClient,
+    order_id,
+    market_id,
+    callback,
+  }: {
+    account: Account;
+    walletClient: WalletClient;
+    publicClient: PublicClient;
+    order_id: string;
+    market_id: string;
+    callback?: (result: TTradeCallback) => void;
+  }) {
+    if (!this.rpcClient) {
+      throw new Error("No RPC Client");
+    }
+
+    if (!this.oracleAddress) {
+      if (callback) {
+        callback({ result: "error", err: "SDK not ready" });
+      }
+      return;
+    }
+
+       
+    let ethBalance = await publicClient.getBalance({ address: account.address as TAddress });
+
+    let gasless = false;
+    if (ethBalance < 8* 10**12) {
+      gasless = true;
+    }
+
+   
+
+    if (!gasless) { //
+      console.log('sendCancelOrderDirect', order_id)
+      let result = await sendCancelOrderDirect(
+        walletClient,
+        publicClient,
+        account,
+        this.oracleAddress || "0x",
+        order_id as TAddress)
+
+      console.log('result', result.transaction_hash)
+
+      if (callback) {
+        callback({ result: 'success' });
+      }
+      return;
+
+    } else {
+      let currentTimestamp = 0;
+      try {
+        const currentPosition = await this.rpcClient.getPositionValue.query({
+            eth_address: account.address as TAddress,
+            market_id,
+        });
+
+
+        currentTimestamp = currentPosition?.timestamp || 0;
+
+
+      } catch (err: any) {
+        currentTimestamp = Date.now()
+
+      }
+
+      if (!currentTimestamp || currentTimestamp == 0) {
+        currentTimestamp = Date.now()
+      }	
+      
+      let result = await sendCancelOrderGasless(
+          walletClient,
+          publicClient,
+          account,
+          this.oracleAddress || "0x",
+          this.bundler || "",
+          this.paymaster || "",
+          order_id as TAddress,
+          currentTimestamp
+        )
+
+          
+      if (callback) {
+        callback({ result: 'success' });
+      }
+      return;
+    }
+			
+  }
 
   async executeTrade({
     account,
@@ -278,8 +434,6 @@ export default class MorpherTradeSDK {
     priceBelow?: number;
     callback?: (result: TTradeCallback) => void;
   }) {
-
-
     if (!closePercentage) {
       closePercentage = 0;
     }
@@ -293,29 +447,34 @@ export default class MorpherTradeSDK {
 
     if (!this.oracleAddress) {
       if (callback) {
-        callback({ result: "error", err: "SDK not ready"});
+        callback({ result: "error", err: "SDK not ready" });
       }
       return;
-
     }
 
     let currentPosition: any;
     try {
-      currentPosition = await this.rpcClient.getPositionValue.query({eth_address: account.address as TAddress, market_id});
-      if (Number(currentPosition.long_shares) == 0 && Number(currentPosition.short_shares) == 0) {
+      currentPosition = await this.rpcClient.getPositionValue.query({
+        eth_address: account.address as TAddress,
+        market_id,
+      });
+      if (
+        Number(currentPosition.long_shares) == 0 &&
+        Number(currentPosition.short_shares) == 0
+      ) {
         currentPosition = undefined;
       }
     } catch (err: any) {
-      console.log('ERROR', err)
+      console.log("ERROR", err);
       this.orderCreating = false;
       if (callback) {
-        callback({ result: "error", err: "Error Fetching Market-Position - " + formatError(err)});
+        callback({
+          result: "error",
+          err: "Error Fetching Market-Position - " + formatError(err),
+        });
       }
       return;
-
     }
-
-
 
     if (tradeAmount && Number(tradeAmount) < 0) {
       this.orderCreating = false;
@@ -328,74 +487,97 @@ export default class MorpherTradeSDK {
     if (closePercentage && Number(closePercentage) < 0) {
       this.orderCreating = false;
       if (callback) {
-        callback({ result: "error", err: "Close percentage cannot be negative" });
+        callback({
+          result: "error",
+          err: "Close percentage cannot be negative",
+        });
       }
       return;
     }
 
-    if ((!tradeAmount || Number(tradeAmount) == 0 ) && (!closePercentage || Number(closePercentage) == 0 )) {
-       this.orderCreating = false;
+    if (
+      (!tradeAmount || Number(tradeAmount) == 0) &&
+      (!closePercentage || Number(closePercentage) == 0)
+    ) {
+      this.orderCreating = false;
       if (callback) {
-        callback({ result: "error", err: "Must specify either a tradeAmount or a closePercentage" });
+        callback({
+          result: "error",
+          err: "Must specify either a tradeAmount or a closePercentage",
+        });
       }
       return;
     }
 
-    if ((tradeAmount && Number(tradeAmount) > 0 ) && (closePercentage && Number(closePercentage) > 0 )) {
-       this.orderCreating = false;
+    if (
+      tradeAmount &&
+      Number(tradeAmount) > 0 &&
+      closePercentage &&
+      Number(closePercentage) > 0
+    ) {
+      this.orderCreating = false;
       if (callback) {
-        callback({ result: "error", err: "You cannot specify both a tradeAmount and a closePercentage together" });
+        callback({
+          result: "error",
+          err: "You cannot specify both a tradeAmount and a closePercentage together",
+        });
       }
       return;
     }
 
-    
-    if (tradeAmount && Number(tradeAmount) > 0 ) {
-      if (!checkBalance(currency, tradeAmount )) {
+    if (tradeAmount && Number(tradeAmount) > 0) {
+      if (!checkBalance(currency, tradeAmount)) {
         this.orderCreating = false;
         if (callback) {
-          callback({ result: "error", err: `You do not have enough ${currency} to process this order. ` });
+          callback({
+            result: "error",
+            err: `You do not have enough ${currency} to process this order. `,
+          });
         }
         return;
-
       }
-
     }
-
 
     let limitOrder = false;
     if ((priceAbove && priceAbove > 0) || (priceBelow && priceBelow > 0)) {
-      limitOrder = true
-    }   
+      limitOrder = true;
+    }
 
     let isCorrectDirection = true;
-    if (tradeAmount && tradeAmount > 0 && currentPosition && (currentPosition.long_shares + currentPosition.short_shares) > 0) {
+    if (
+      tradeAmount &&
+      tradeAmount > 0 &&
+      currentPosition &&
+      currentPosition.long_shares + currentPosition.short_shares > 0
+    ) {
       if (direction === "long" && currentPosition.direction === "short") {
-        isCorrectDirection = false
+        isCorrectDirection = false;
       }
 
       if (direction === "short" && currentPosition.direction === "long") {
-        isCorrectDirection = false
+        isCorrectDirection = false;
       }
-
     }
 
     if (!isCorrectDirection) {
-        this.orderCreating = false;
-        if (callback) {
-          callback({ result: "error", err: `You cannot trade in the opposite direction to an existing position. PLease close the existing position first. ` });
-        }
-        return;
+      this.orderCreating = false;
+      if (callback) {
+        callback({
+          result: "error",
+          err: `You cannot trade in the opposite direction to an existing position. PLease close the existing position first. `,
+        });
+      }
+      return;
     }
 
-
-
-
     if (this.orderCreating) {
-        if (callback) {
-          callback({ result: "error", err: `An order is already executing. Can only execute one order at a time ` });
-        }
-        return;
+      if (callback) {
+        callback({
+          result: "error",
+          err: `An order is already executing. Can only execute one order at a time `,
+        });
+      }
+      return;
       return;
     }
 
@@ -422,21 +604,24 @@ export default class MorpherTradeSDK {
         close_shares_amount = String(currentPosition.short_shares);
       }
     } else {
-   
-      if (closePercentage  && (closePercentage ||0) > 0 && currentPosition) {
+      if (closePercentage && (closePercentage || 0) > 0 && currentPosition) {
         // If user submitting over 100%
         if ((closePercentage || 0) > 100) {
           return;
         }
 
         if (currentPosition.direction === "long") {
-          close_shares_amount = (BigInt(currentPosition.long_shares)
-            * BigInt((closePercentage || 0)) / BigInt(100)).toString();
-
+          close_shares_amount = (
+            (BigInt(currentPosition.long_shares) *
+              BigInt(closePercentage || 0)) /
+            BigInt(100)
+          ).toString();
         } else if (currentPosition.direction === "short") {
-          close_shares_amount = (BigInt(currentPosition.short_shares)
-            * BigInt((closePercentage || 0)) / BigInt(100)).toString();
-
+          close_shares_amount = (
+            (BigInt(currentPosition.short_shares) *
+              BigInt(closePercentage || 0)) /
+            BigInt(100)
+          ).toString();
         }
       }
     }
@@ -446,29 +631,29 @@ export default class MorpherTradeSDK {
       (!close_shares_amount || Number(close_shares_amount) <= 0)
     ) {
       this.orderCreating = false;
-        if (callback) {
-          callback({ result: "error", err: `Somehting went wrong. Could not resolve a open trade amount or a close shareds amount from the parameters provided.` });
-        }
-        return;
+      if (callback) {
+        callback({
+          result: "error",
+          err: `Somehting went wrong. Could not resolve a open trade amount or a close shareds amount from the parameters provided.`,
+        });
+      }
+      return;
     }
-      
 
-    const market = soliditySha3(
-      market_id
-    );
+    const market = soliditySha3(market_id);
 
     this.orderCreating = false;
 
     let currentTimestamp = currentPosition?.timestamp || 0;
 
-    const contract_position = formatPosition(await publicClient.readContract({
-			address: this.stateAddress || '0x',
-			abi: morpherStateAbi,
-			functionName: 'getPosition',
-			args: [account.address, market]
-		})) as ContractPosition;
-
-
+    const contract_position = formatPosition(
+      await publicClient.readContract({
+        address: this.stateAddress || "0x",
+        abi: morpherStateAbi,
+        functionName: "getPosition",
+        args: [account.address, market],
+      })
+    ) as ContractPosition;
 
     if (contract_position && currentPosition && !currentPosition.error) {
       if (
@@ -483,10 +668,10 @@ export default class MorpherTradeSDK {
         }
       }
     } else {
-      
       if (
-        currentPosition && (
-        Number(currentPosition.long_shares) !== 0 || Number(currentPosition.short_shares) !== 0)
+        currentPosition &&
+        (Number(currentPosition.long_shares) !== 0 ||
+          Number(currentPosition.short_shares) !== 0)
       ) {
         this.orderCreating = false;
         if (callback) {
@@ -495,30 +680,32 @@ export default class MorpherTradeSDK {
       }
     }
 
-
-
     // create the order using the sidechain smart contract
 
-    let direction_sltp = '';
+    let direction_sltp = "";
 
-    
+    let priceAboveFormatted = BigInt(
+      Math.round((priceAbove || 0) * 10 ** 8)
+    ).toString();
+    let priceBelowFormatted = BigInt(
+      Math.round((priceBelow || 0) * 10 ** 8)
+    ).toString();
 
-    let priceAboveFormatted = BigInt(Math.round(((priceAbove || 0) * 10**8))).toString()
-    let priceBelowFormatted = BigInt(Math.round(((priceBelow || 0) * 10**8))).toString()
-   
     if (Number(priceAbove) < 0) priceAbove = 0;
     if (Number(priceBelow) < 0) priceBelow = 0;
 
-       
     if (limitOrder) {
       try {
-            let splitValue = await this.rpcClient.getPositionSplitValue.query({
+        let splitValue = await this.rpcClient.getPositionSplitValue.query({
           eth_address: account.address as TAddress,
           market_id,
-          price_above: BigInt(Math.round(((priceAbove || 0) * 10**8))).toString(),
-          price_below: BigInt(Math.round(((priceBelow || 0) * 10**8))).toString(),
+          price_above: BigInt(
+            Math.round((priceAbove || 0) * 10 ** 8)
+          ).toString(),
+          price_below: BigInt(
+            Math.round((priceBelow || 0) * 10 ** 8)
+          ).toString(),
         });
-
 
         if (!splitValue.price_above || !splitValue.price_below) {
           this.orderCreating = false;
@@ -530,16 +717,17 @@ export default class MorpherTradeSDK {
         priceBelowFormatted = splitValue.price_below;
       } catch (err: any) {
         this.orderCreating = false;
-          if (callback) {
-            callback({ result: "error", err: `Error fetching position split data` });
-          }
+        if (callback) {
+          callback({
+            result: "error",
+            err: `Error fetching position split data`,
+          });
+        }
       }
     }
 
-
     const good_until = 0;
     const good_from = 0;
-
 
     this.transactionNumber += 1;
     const transactionNumber = this.transactionNumber;
@@ -549,19 +737,15 @@ export default class MorpherTradeSDK {
     const transaction_data = {
       market,
       close_shares_amount: String(close_shares_amount),
-      open_mph_token_amount: BigInt(
-        open_mph_token_amount
-      ).toString(),
+      open_mph_token_amount: BigInt(open_mph_token_amount).toString(),
       direction: direction === "long" ? true : false,
-      leverage: BigInt(Math.round(leverage * 10**8)).toString(),
+      leverage: BigInt(Math.round(leverage * 10 ** 8)).toString(),
       priceAbove: limitOrder ? priceAboveFormatted : "0",
       priceBelow: limitOrder ? priceBelowFormatted : "0",
       good_until: good_until,
       good_from: good_from,
     };
     try {
-      
-
       // if this is a close oder then check the current position close shares amount against the requested close shares amount.
       if (
         !limitOrder &&
@@ -579,11 +763,14 @@ export default class MorpherTradeSDK {
           }
         }
 
-        const longSharesValue =BigInt(String(currentPosition.long_shares) || '0')
-        
-        const shortSharesValue =BigInt(String(currentPosition.short_shares) || '0')
+        const longSharesValue = BigInt(
+          String(currentPosition.long_shares) || "0"
+        );
 
-        
+        const shortSharesValue = BigInt(
+          String(currentPosition.short_shares) || "0"
+        );
+
         const totalSharesValue = longSharesValue + shortSharesValue;
 
         if (totalSharesValue < closeSharesValue) {
@@ -594,41 +781,39 @@ export default class MorpherTradeSDK {
         }
       }
 
+      let ethBalance = await publicClient.getBalance({
+        address: account.address as TAddress,
+      });
 
-
-       
-    let ethBalance = await publicClient.getBalance({ address: account.address as TAddress });
-
-    let gasless = false;
-    if (ethBalance < 8* 10**12) {
-      gasless = true;
-    }
-
-    console.log('ethBalance', ethBalance, gasless)
-
-
-    let timeOut = setTimeout(() => {
-      this.orderCreating = false;
-      if (callback) {
-        callback({ result: "error", err: `Something went wrong - ORder creation timeout.` });
+      let gasless = false;
+      if (ethBalance < 8 * 10 ** 12) {
+        gasless = true;
       }
-    }, 15000);
 
+      console.log("ethBalance", ethBalance, gasless);
 
-      if (
-        currency !== "MPH"
-      ) {
+      let timeOut = setTimeout(() => {
+        this.orderCreating = false;
+        if (callback) {
+          callback({
+            result: "error",
+            err: `Something went wrong - ORder creation timeout.`,
+          });
+        }
+      }, 15000);
+
+      if (currency !== "MPH") {
         if (currency == "ETH") {
           sendCreateOrderGasToken(
             walletClient,
             publicClient,
             account,
-            this.oracleAddress || '0x',
+            this.oracleAddress || "0x",
             market,
             String(close_shares_amount),
             open_mph_token_amount,
             direction === "long" ? true : false,
-            BigInt(Math.round(leverage * 10**8)).toString(),
+            BigInt(Math.round(leverage * 10 ** 8)).toString(),
             limitOrder ? priceAboveFormatted : "0",
             limitOrder ? priceBelowFormatted : "0",
             good_until,
@@ -644,15 +829,15 @@ export default class MorpherTradeSDK {
               walletClient,
               publicClient,
               account,
-              this.oracleAddress || '0x',
-              this.usdcAddress || '0x',
-              this.tokenAddress || '0x',
+              this.oracleAddress || "0x",
+              this.usdcAddress || "0x",
+              this.tokenAddress || "0x",
               currentPosition?.value || 0n,
               market,
               String(close_shares_amount),
               open_mph_token_amount,
               direction === "long" ? true : false,
-               BigInt(Math.round(leverage * 10**8)).toString(),
+              BigInt(Math.round(leverage * 10 ** 8)).toString(),
               limitOrder ? priceAboveFormatted : "0",
               limitOrder ? priceBelowFormatted : "0",
               good_until,
@@ -666,16 +851,16 @@ export default class MorpherTradeSDK {
               walletClient,
               publicClient,
               account,
-              this.oracleAddress || '0x',
-              this.usdcAddress || '0x',
-              this.bundler || '',
-              this.paymaster || '',
+              this.oracleAddress || "0x",
+              this.usdcAddress || "0x",
+              this.bundler || "",
+              this.paymaster || "",
 
               market,
               String(close_shares_amount),
               open_mph_token_amount,
               direction === "long" ? true : false,
-               BigInt(Math.round(leverage * 10**8)).toString(),
+              BigInt(Math.round(leverage * 10 ** 8)).toString(),
               limitOrder ? priceAboveFormatted : "0",
               limitOrder ? priceBelowFormatted : "0",
               good_until,
@@ -688,18 +873,18 @@ export default class MorpherTradeSDK {
           }
         }
       } else if (!gasless) {
-        console.log('transport', walletClient.transport)
+        console.log("transport", walletClient.transport);
         //
         sendCreateOrderDirect(
           walletClient,
           publicClient,
           account,
-          this.oracleAddress || '0x',
+          this.oracleAddress || "0x",
           market,
           String(close_shares_amount),
           BigInt(Number(open_mph_token_amount)).toString(),
           direction === "long" ? true : false,
-           BigInt(Math.round(leverage * 10**8)).toString(),
+          BigInt(Math.round(leverage * 10 ** 8)).toString(),
           limitOrder ? priceAboveFormatted : "0",
           limitOrder ? priceBelowFormatted : "0",
           good_until,
@@ -713,14 +898,14 @@ export default class MorpherTradeSDK {
           walletClient,
           publicClient,
           account,
-          this.oracleAddress || '0x',
-          this.bundler || '',
-          this.paymaster || '',
+          this.oracleAddress || "0x",
+          this.bundler || "",
+          this.paymaster || "",
           market,
           String(close_shares_amount),
           BigInt(Number(open_mph_token_amount)).toString(),
           direction === "long" ? true : false,
-           BigInt(Math.round(leverage * 10**8)).toString(),
+          BigInt(Math.round(leverage * 10 ** 8)).toString(),
           limitOrder ? priceAboveFormatted : "0",
           limitOrder ? priceBelowFormatted : "0",
           good_until,
@@ -731,19 +916,18 @@ export default class MorpherTradeSDK {
           currentTimestamp
         );
       }
-    } catch (err:any) {
+    } catch (err: any) {
       this.orderCreating = false;
       if (callback) {
-        callback({ result: "error", err: `Error executing order: ${formatError(err)}` });
+        callback({
+          result: "error",
+          err: `Error executing order: ${formatError(err)}`,
+        });
       }
     }
-
   }
 }
 export type RouterDefinition = V2RouterDefinition;
-
-
-
 
 export const usdFormatter = (input: any) => {
   const price = parseFloat(input || 0);
@@ -764,6 +948,3 @@ export const tokenValueFormatter = (param: any) => {
   else if (0.00001 > abs) round = 9;
   return price ? price.toFixed(round) : "0";
 };
-
-
-

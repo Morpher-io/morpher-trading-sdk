@@ -1,5 +1,4 @@
 import * as trpc from '@trpc/server';
-import { Order, Position } from '../../database/models';
 export interface TMarket {
     market_id: string;
     name: string;
@@ -35,6 +34,59 @@ export interface TMarket {
 export interface TMarketData {
     [market: string]: TMarket;
 }
+export type TORders = TOrder[];
+export type TOrder = {
+    id: string;
+    position_id?: string;
+    eth_address: string;
+    market_id?: string;
+    direction: string;
+    status: string;
+    type: string;
+    created_at: number;
+    oracle_called_at?: number;
+    completed_at?: number;
+    tx_hash?: string;
+    callback_hash?: string;
+    price?: string;
+    shares?: string;
+    leverage?: string;
+    spread?: string;
+    liquidation_timestamp?: number;
+    token_amount?: string;
+    price_above?: string;
+    price_below?: string;
+    good_from?: string;
+    good_until?: string;
+    open_mph_token_amount?: string;
+    close_shares_amount?: string;
+    mph_price?: string;
+    unadjusted_price?: string;
+    chain_id?: number;
+};
+export type TPosition = {
+    id: string;
+    eth_address: string;
+    market_id: string;
+    direction: string;
+    average_price: string;
+    average_spread: string;
+    average_leverage: string;
+    long_shares: string;
+    short_shares: string;
+    liquidation_price?: string;
+    liquidation_timestamp?: number;
+    timestamp?: number;
+    created_at?: number;
+    chain_id?: number;
+    value?: string;
+    total_return?: string;
+    total_return_percent?: string;
+    total_interest?: string;
+    logo_image?: string;
+    name?: string;
+    symbol?: string;
+};
 export type StrictOHLCArray = [number, number, number, number, number];
 export interface TMarketDetail extends TMarket {
     pending_order_id?: string;
@@ -60,7 +112,7 @@ export declare const v2Router: trpc.TRPCBuiltRouter<{
     }>;
     getMarketList: trpc.TRPCQueryProcedure<{
         input: {
-            type?: "unique" | "stock" | "crypto" | "forex" | "commodity" | "index" | "prediction" | "f1" | "mlb" | undefined;
+            type?: "unique" | "stock" | "crypto" | "forex" | "position" | "commodity" | "index" | "prediction" | "f1" | "mlb" | undefined;
             market_id?: string | undefined;
             cursor?: number | null | undefined;
         } | undefined;
@@ -87,7 +139,7 @@ export declare const v2Router: trpc.TRPCBuiltRouter<{
             order_id?: string | undefined;
             market_id?: string | undefined;
         } | undefined;
-        output: Order[];
+        output: TORders;
         meta: object;
     }>;
     getPortfolio: trpc.TRPCQueryProcedure<{
@@ -118,7 +170,7 @@ export declare const v2Router: trpc.TRPCBuiltRouter<{
             market_id?: string | undefined;
             position_id?: string | undefined;
         } | undefined;
-        output: Position[];
+        output: TPosition[];
         meta: object;
     }>;
     getReturns: trpc.TRPCQueryProcedure<{
@@ -143,7 +195,7 @@ export declare const v2Router: trpc.TRPCBuiltRouter<{
             eth_address: string;
             market_id?: string | undefined;
         } | undefined;
-        output: Position | undefined;
+        output: TPosition | undefined;
         meta: object;
     }>;
     /**
@@ -181,4 +233,3 @@ export declare const v2Router: trpc.TRPCBuiltRouter<{
     }>;
 }>>;
 export type V2RouterDefinition = typeof v2Router;
-export {};

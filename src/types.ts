@@ -32,7 +32,7 @@ export interface ContractPosition {
 
 export type TTradeCallback = {
   result: "success" | "error";
-  err: string;
+  err?: string;
 };
 
 export interface TMessageDomain {
