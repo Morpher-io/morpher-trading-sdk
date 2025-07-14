@@ -809,8 +809,6 @@ export default class MorpherTradeSDK {
         gasless = true;
       }
 
-      console.log("ethBalance", ethBalance, gasless);
-
       let timeOut = setTimeout(() => {
         this.orderCreating = false;
         if (callback) {
