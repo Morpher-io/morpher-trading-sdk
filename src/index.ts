@@ -223,6 +223,21 @@ export default class MorpherTradeSDK {
     return result;
   }
 
+  async getPortfolio({
+    eth_address,
+  }: {
+    eth_address: TAddress;
+  }) {
+    if (!this.rpcClient) {
+      throw new Error("No RPC Client");
+    }
+
+    const result = await this.rpcClient.getPortfolio.query({
+      eth_address,
+    });
+    return result;
+  }
+
   async getPositions({
     eth_address,
     market_id,
@@ -289,6 +304,10 @@ export default class MorpherTradeSDK {
 
     if (this.unsubscribeFromOrder) {
       this.unsubscribeFromOrder();
+    }
+
+    if (!eth_address) {
+      return
     }
 
     this.unsubscribeFromOrder = client.subscribe(
