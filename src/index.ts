@@ -3,14 +3,11 @@ import type { AnyRouter } from "@trpc/server";
 import { createClient } from "graphql-ws";
 import type {
   V2RouterDefinition,
-  TMarketData,
   TMarketDetail,
 } from "./v2.router";
 import {
   ContractPosition,
   TAddress,
-  TCurrencyList,
-  TExchangeRate,
   TMarketType,
   TTradeCallback,
 } from "./types";
@@ -33,7 +30,7 @@ export type TradeCallback = TTradeCallback;
 export type MarketDetail = TMarketDetail;
 export type TCurrency = "MPH" | "USDC" | "ETH";
 
-export default class MorpherTradeSDK {
+export class MorpherTradeSDK {
   private endpoint: string;
   private rpcClient?: TRPCClient<RouterDefinition>;
   private transactionNumber: number = 0;
@@ -115,6 +112,7 @@ export default class MorpherTradeSDK {
         balance?: bigint;
         usd?: number;
         decimals?: number;
+        usd_exchange_rate?: number;
       };
     } = {};
 
@@ -123,9 +121,10 @@ export default class MorpherTradeSDK {
         symbol: "ETH",
         balance: ethBalance,
         usd: ethBalance
-          ? (Number(ethBalance) / 10 ** 18) * exchangeRates.eth_price
+          ? (Number(ethBalance) / 10 ** 18) * Number(exchangeRates.eth_price)
           : undefined,
         decimals: 18,
+        usd_exchange_rate: Number(exchangeRates.eth_price)
       },
     };
 
@@ -160,6 +159,10 @@ export default class MorpherTradeSDK {
               ]
             : undefined,
         decimals: decimals,
+        usd_exchange_rate: Number((exchangeRates as any)[
+          tokenAddress.symbol.toLowerCase() + "_price" || 0
+        ])
+
       };
     }
 
@@ -223,6 +226,21 @@ export default class MorpherTradeSDK {
     return result;
   }
 
+  async getPortfolio({
+    eth_address,
+  }: {
+    eth_address: TAddress;
+  }) {
+    if (!this.rpcClient) {
+      throw new Error("No RPC Client");
+    }
+
+    const result = await this.rpcClient.getPortfolio.query({
+      eth_address,
+    });
+    return result;
+  }
+
   async getPositions({
     eth_address,
     market_id,
@@ -240,6 +258,24 @@ export default class MorpherTradeSDK {
       eth_address,
       market_id,
       position_id,
+    });
+    return result;
+  }
+
+  async getReturns({
+    eth_address,
+    type,
+  }: {
+    eth_address: TAddress;
+    type?: "d" | "w" | "m" | "y";
+  }) {
+    if (!this.rpcClient) {
+      throw new Error("No RPC Client");
+    }
+
+    const result = await this.rpcClient.getReturns.query({
+      eth_address,
+      type,
     });
     return result;
   }
@@ -267,6 +303,7 @@ export default class MorpherTradeSDK {
       },
       {
         next: (dat: any) => {
+          console.log('market update', dat?.data?.marketDataV2)
           callback(dat?.data?.marketDataV2);
         },
         error: (err) => {
@@ -289,6 +326,10 @@ export default class MorpherTradeSDK {
 
     if (this.unsubscribeFromOrder) {
       this.unsubscribeFromOrder();
+    }
+
+    if (!eth_address) {
+      return
     }
 
     this.unsubscribeFromOrder = client.subscribe(
@@ -351,18 +392,16 @@ export default class MorpherTradeSDK {
    
 
     if (!gasless) { //
-      console.log('sendCancelOrderDirect', order_id)
-      let result = await sendCancelOrderDirect(
+      const result = await sendCancelOrderDirect(
         walletClient,
         publicClient,
         account,
         this.oracleAddress || "0x",
         order_id as TAddress)
 
-      console.log('result', result.transaction_hash)
 
       if (callback) {
-        callback({ result: 'success' });
+        callback({ result: 'success', callback_result: result });
       }
       return;
 
@@ -387,7 +426,7 @@ export default class MorpherTradeSDK {
         currentTimestamp = Date.now()
       }	
       
-      let result = await sendCancelOrderGasless(
+      const callback_result = await sendCancelOrderGasless(
           walletClient,
           publicClient,
           account,
@@ -400,7 +439,7 @@ export default class MorpherTradeSDK {
 
           
       if (callback) {
-        callback({ result: 'success' });
+        callback({ result: 'success', callback_result });
       }
       return;
     }
@@ -682,7 +721,6 @@ export default class MorpherTradeSDK {
 
     // create the order using the sidechain smart contract
 
-    let direction_sltp = "";
 
     let priceAboveFormatted = BigInt(
       Math.round((priceAbove || 0) * 10 ** 8)
@@ -730,10 +768,7 @@ export default class MorpherTradeSDK {
     const good_from = 0;
 
     this.transactionNumber += 1;
-    const transactionNumber = this.transactionNumber;
     const submit_date = Date.now();
-    const tx_hash = "";
-    const order_id = "";
     const transaction_data = {
       market,
       close_shares_amount: String(close_shares_amount),
@@ -790,8 +825,6 @@ export default class MorpherTradeSDK {
         gasless = true;
       }
 
-      console.log("ethBalance", ethBalance, gasless);
-
       let timeOut = setTimeout(() => {
         this.orderCreating = false;
         if (callback) {
@@ -804,7 +837,7 @@ export default class MorpherTradeSDK {
 
       if (currency !== "MPH") {
         if (currency == "ETH") {
-          sendCreateOrderGasToken(
+          await sendCreateOrderGasToken(
             walletClient,
             publicClient,
             account,
@@ -825,7 +858,7 @@ export default class MorpherTradeSDK {
         } else {
           if (!gasless) {
             //
-            sendCreateOrderToken(
+            await sendCreateOrderToken(
               walletClient,
               publicClient,
               account,
@@ -847,7 +880,7 @@ export default class MorpherTradeSDK {
               transaction_data
             );
           } else {
-            sendCreateOrderTokenGasless(
+            await sendCreateOrderTokenGasless(
               walletClient,
               publicClient,
               account,
@@ -873,9 +906,8 @@ export default class MorpherTradeSDK {
           }
         }
       } else if (!gasless) {
-        console.log("transport", walletClient.transport);
         //
-        sendCreateOrderDirect(
+        await sendCreateOrderDirect(
           walletClient,
           publicClient,
           account,
@@ -894,7 +926,7 @@ export default class MorpherTradeSDK {
           transaction_data
         );
       } else {
-        sendCreateOrderGasless(
+        await sendCreateOrderGasless(
           walletClient,
           publicClient,
           account,
@@ -916,6 +948,13 @@ export default class MorpherTradeSDK {
           currentTimestamp
         );
       }
+
+      if (callback) {
+        callback({
+          result: "success",
+        });
+      }
+
     } catch (err: any) {
       this.orderCreating = false;
       if (callback) {

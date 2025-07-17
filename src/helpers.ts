@@ -1,10 +1,11 @@
-import { Account, encodeFunctionData, erc1155Abi, erc20Abi, erc20Abi_bytes32, erc721Abi, getAddress, getContract, hexToSignature, keccak256, parseEventLogs, parseSignature, PublicClient, toHex, WalletClient } from "viem";
+import { Account, encodeFunctionData, getAddress, getContract, hexToSignature, keccak256, parseEventLogs, parseSignature, PublicClient, toHex, WalletClient } from "viem";
 import { morpherOracleAbi, morpherTokenAbi } from "./abi";
 import { TAddress, TMessageDomain, TSignMessage } from "./types";
 import { calculateUserOperationMaxGasCost, CandidePaymaster, MetaTransaction, SafeAccountV0_3_0 as SafeAccount } from "abstractionkit";
 
 
 export const checkBalance = (currency: string, amount: BigInt) => {
+    // NB--- TODO
     return true
 }
 
@@ -94,7 +95,6 @@ export const sendCreateOrderGasToken = async (walletClient: WalletClient, public
     }
 
 
-    let tx_hash = ''
 
     const morpherOracleContract = getContract({
         abi: morpherOracleAbi,
@@ -113,7 +113,6 @@ export const sendCreateOrderGasToken = async (walletClient: WalletClient, public
 
             )
         console.log('transaction_hash', transaction_hash)	
-        tx_hash = transaction_hash;
         clearTimeout(timeOut);
         let order_id = '';
             
@@ -261,8 +260,7 @@ const getOracleCancelCallPermitCallData = async (walletClient: WalletClient, acc
 }
 
 export const sendCancelOrderGasless = async (walletClient: WalletClient, publicClient: PublicClient, account: Account, oracle_address: TAddress, bundler: string, paymasterAddress: string, order_id: string, currentTimestamp: number) => {
-    const tx_hash = '';
-    const submit_date = Date.now()
+
     
 
     try {
@@ -428,7 +426,6 @@ export const sendCancelOrderDirect = async (walletClient: WalletClient, publicCl
 
 export const sendCreateOrderDirect = async (walletClient: WalletClient, publicClient: PublicClient, account: Account, oracle_address: TAddress, market: string, close_shares_amount: any, open_mph_token_amount: any, direction: boolean, leverage: any, priceAbove: any, priceBelow: any, good_until: any, good_from: any, timeOut: any, submit_date: any, transaction_data: any) => {
 
-    let tx_hash = '';
     let order_id = '';
     
     const morpherOracleContract = getContract({
@@ -439,16 +436,12 @@ export const sendCreateOrderDirect = async (walletClient: WalletClient, publicCl
     
     try {
 
-        type TCreateOrderParams = readonly [{ _marketId: `0x${string}`; _closeSharesAmount: bigint; _openMPHTokenAmount: bigint; _tradeDirection: boolean; _orderLeverage: bigint; _onlyIfPriceAbove: bigint; _onlyIfPriceBelow: bigint; _goodUntil: bigint; _goodFrom: bigint; }] 
-        type TCreateOrderParams2 = [`0x${string}`, bigint, bigint, boolean, bigint, bigint, bigint, bigint, bigint]
+        type TCreateOrderParams = [`0x${string}`, bigint, bigint, boolean, bigint, bigint, bigint, bigint, bigint]
 
-        const createOrderParams2: TCreateOrderParams2 = [market as `0x${string}`, BigInt(close_shares_amount), BigInt(open_mph_token_amount), direction, BigInt(leverage), BigInt(priceAbove), BigInt(priceBelow), BigInt(good_until), BigInt(good_from)				]
-        const createOrderParams: TCreateOrderParams = [{_marketId: market as `0x${string}`, _closeSharesAmount: close_shares_amount as bigint,
-            _openMPHTokenAmount: BigInt(open_mph_token_amount), _tradeDirection: direction, _orderLeverage: BigInt(leverage), _onlyIfPriceAbove: BigInt(priceAbove), _onlyIfPriceBelow: BigInt(priceBelow), _goodUntil: BigInt(good_until), _goodFrom: BigInt(good_from)
-        }]
+        const createOrderParams: TCreateOrderParams = [market as `0x${string}`, BigInt(close_shares_amount), BigInt(open_mph_token_amount), direction, BigInt(leverage), BigInt(priceAbove), BigInt(priceBelow), BigInt(good_until), BigInt(good_from)				]
 
         const transaction_hash = await morpherOracleContract.write
-            .createOrder(createOrderParams2
+            .createOrder(createOrderParams
                 , { chain: publicClient.chain, gas: BigInt(800000), account: account.address as TAddress }
                 
                 // ,
@@ -460,7 +453,6 @@ export const sendCreateOrderDirect = async (walletClient: WalletClient, publicCl
 
             )
 
-        tx_hash = transaction_hash;
         clearTimeout(timeOut);
             
 
@@ -627,8 +619,7 @@ const getOracleCallPermitCalldata = async (walletClient: WalletClient, account: 
 }
 
 export const sendCreateOrderGasless = async (walletClient: WalletClient, publicClient: PublicClient, account: Account, oracle_address: TAddress, bundler: string, paymasterAddress: string, market: string, close_shares_amount: any, open_mph_token_amount: any, direction: any, leverage: any, priceAbove: any, priceBelow: any, good_until: any, good_from: any, timeOut: any, submit_date: any, transaction_data: any, currentTimestamp: any) => {
-    const tx_hash = '';
-    const order_id = '';
+
 
     try {
 
@@ -989,10 +980,6 @@ export const sendCreateOrderToken = async (walletClient: WalletClient, publicCli
         s: hexToSig.s,
     }
 
-    console.log('tokenPermit', tokenPermit)
-
-    let tx_hash = ''
-
   const morpherOracleContract = getContract({
         abi: morpherOracleAbi,
         address: oracle_address,
@@ -1004,8 +991,7 @@ export const sendCreateOrderToken = async (walletClient: WalletClient, publicCli
             [createOrder as any, tokenPermit as any],
             { chain: publicClient.chain, gas: BigInt(800000), account: account.address as TAddress }
         )
-    console.log('transaction_hash', transaction_hash)	
-    tx_hash = transaction_hash;
+    
     clearTimeout(timeOut);
         
     const receipt = await publicClient.waitForTransactionReceipt({ hash: transaction_hash })
@@ -1295,10 +1281,7 @@ const getTokenPermit = async (walletClient: WalletClient, publicClient: PublicCl
 		}
 
 export const sendCreateOrderTokenGasless = async (walletClient: WalletClient, publicClient: PublicClient, account: Account, oracle_address: TAddress, tradeTokenAddress: TAddress, bundler: string, paymasterAddress: string, market: string, close_shares_amount: any, open_mph_token_amount: any, direction: any, leverage: any, priceAbove: any, priceBelow: any, good_until: any, good_from: any, timeOut: any, submit_date: any, transaction_data: any, currentTimestamp: any) => {
-    const tx_hash = '';
-    const order_id = '';
-    
-    
+   
     try {
 
         let smartAccount = SafeAccount.initializeNewAccount(
