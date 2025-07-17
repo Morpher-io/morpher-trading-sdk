@@ -3,14 +3,11 @@ import type { AnyRouter } from "@trpc/server";
 import { createClient } from "graphql-ws";
 import type {
   V2RouterDefinition,
-  TMarketData,
   TMarketDetail,
 } from "./v2.router";
 import {
   ContractPosition,
   TAddress,
-  TCurrencyList,
-  TExchangeRate,
   TMarketType,
   TTradeCallback,
 } from "./types";
@@ -33,7 +30,7 @@ export type TradeCallback = TTradeCallback;
 export type MarketDetail = TMarketDetail;
 export type TCurrency = "MPH" | "USDC" | "ETH";
 
-export default class MorpherTradeSDK {
+export class MorpherTradeSDK {
   private endpoint: string;
   private rpcClient?: TRPCClient<RouterDefinition>;
   private transactionNumber: number = 0;
@@ -395,18 +392,16 @@ export default class MorpherTradeSDK {
    
 
     if (!gasless) { //
-      console.log('sendCancelOrderDirect', order_id)
-      let result = await sendCancelOrderDirect(
+      const result = await sendCancelOrderDirect(
         walletClient,
         publicClient,
         account,
         this.oracleAddress || "0x",
         order_id as TAddress)
 
-      console.log('result', result.transaction_hash)
 
       if (callback) {
-        callback({ result: 'success' });
+        callback({ result: 'success', callback_result: result });
       }
       return;
 
@@ -431,7 +426,7 @@ export default class MorpherTradeSDK {
         currentTimestamp = Date.now()
       }	
       
-      let result = await sendCancelOrderGasless(
+      const callback_result = await sendCancelOrderGasless(
           walletClient,
           publicClient,
           account,
@@ -444,7 +439,7 @@ export default class MorpherTradeSDK {
 
           
       if (callback) {
-        callback({ result: 'success' });
+        callback({ result: 'success', callback_result });
       }
       return;
     }
@@ -726,7 +721,6 @@ export default class MorpherTradeSDK {
 
     // create the order using the sidechain smart contract
 
-    let direction_sltp = "";
 
     let priceAboveFormatted = BigInt(
       Math.round((priceAbove || 0) * 10 ** 8)
@@ -774,10 +768,7 @@ export default class MorpherTradeSDK {
     const good_from = 0;
 
     this.transactionNumber += 1;
-    const transactionNumber = this.transactionNumber;
     const submit_date = Date.now();
-    const tx_hash = "";
-    const order_id = "";
     const transaction_data = {
       market,
       close_shares_amount: String(close_shares_amount),

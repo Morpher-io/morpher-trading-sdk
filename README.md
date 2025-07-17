@@ -4,6 +4,8 @@ The Morpher Trade SDK provides a comprehensive library for developers to integra
 
 This SDK is built with TypeScript and utilises `viem` for blockchain interactions and `tRPC` for communicating with the Morpher backend.
 
+For full documentation, visit [https://www.morpher.com/api/trading-sdk](https://www.morpher.com/api/trading-sdk).
+
 ## Installation
 
 Install the SDK using npm or yarn:
@@ -25,7 +27,7 @@ Here's a quick example to get you started.
 First, you need to create an instance of the `MorpherTradeSDK` with the appropriate endpoint.
 
 ```typescript
-import MorpherTradeSDK from 'morpher-trade-sdk';
+import { MorpherTradeSDK } from 'morpher-trade-sdk';
 
 const sdk = new MorpherTradeSDK('https://api.morpher.com/v2');
 
