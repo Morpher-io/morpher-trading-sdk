@@ -78,6 +78,14 @@ async function exampleUsage() {
     const positions = await sdk.getPositions({ eth_address: account.address });
     console.log('Your Positions:', positions);
 
+    // Get your portfolio summary
+    const portfolio = await sdk.getPortfolio({ eth_address: account.address });
+    console.log('Your Portfolio:', portfolio);
+
+    // Get your daily returns
+    const returns = await sdk.getReturns({ eth_address: account.address, type: 'd' });
+    console.log('Your Daily Returns:', returns);
+
   } catch (error) {
     console.error('An error occurred:', error);
   }
@@ -107,6 +115,15 @@ Fetches a user's open positions.
 - `eth_address`: The user's Ethereum address.
 - `market_id`: (Optional) Filter by market ID.
 - `position_id`: (Optional) Filter by position ID.
+
+#### `getPortfolio({ eth_address })`
+Fetches the portfolio summary for a given user.
+- `eth_address`: The user's Ethereum address.
+
+#### `getReturns({ eth_address, type? })`
+Fetches the portfolio returns history for a given user.
+- `eth_address`: The user's Ethereum address.
+- `type`: (Optional) The time frame for the returns history: `'d'` (day), `'w'` (week), `'m'` (month), or `'y'` (year). Defaults to day.
 
 #### `getOrders({ eth_address, market_id?, order_id?, tx_hash? })`
 Fetches a user's order history.
