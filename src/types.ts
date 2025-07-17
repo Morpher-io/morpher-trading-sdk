@@ -15,6 +15,7 @@ export type TCurrencyDetails = {
     balance?: bigint;
     usd?: number;
     decimals?: number;
+    usd_exchange_rate?: number;
   }
 
 export type TCurrencyList = {

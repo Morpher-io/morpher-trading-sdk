@@ -87,6 +87,15 @@ export type TPosition = {
     name?: string;
     symbol?: string;
 };
+export interface TConfig {
+    chain_id: number;
+    tokenAddress: `0x${string}`;
+    usdcAddress: `0x${string}`;
+    stateAddress: `0x${string}`;
+    oracleAddress: `0x${string}`;
+    bundler: string;
+    paymaster: string;
+}
 export type StrictOHLCArray = [number, number, number, number, number];
 export interface TMarketDetail extends TMarket {
     pending_order_id?: string;
@@ -95,21 +104,60 @@ export interface TMarketDetail extends TMarket {
     data_hourly?: StrictOHLCArray[];
     data_daily?: StrictOHLCArray[];
 }
+export interface TPositionSplit {
+    eth_address: `0x${string}`;
+    market_id: string;
+    price_above: string;
+    price_below: string;
+    price_multiplier: number;
+    splits: any[];
+}
+export interface TExchangeRates {
+    mph_price: string;
+    eth_price: string;
+    usdc_price: string;
+}
+export interface TPortfolio {
+    user_id: string;
+    eth_address: string;
+    email: string;
+    timestamp: number;
+    status: "email" | "airdrop" | "kyc" | "confirmed" | "email updated" | "migrated" | "migrating";
+    chain_id: number;
+    current_value: bigint;
+    cash_balance: bigint;
+    eth_balance: bigint;
+    tradeable_balance: bigint;
+    locked_rewards: bigint;
+    transferable_balance: bigint;
+    usdc_balance: string;
+    position_count: number;
+}
+export interface TPortfolioDataPoint {
+    timestamp: number;
+    cash: number;
+    stake: number;
+    positions: number;
+    total: number;
+    returns: number;
+}
 export declare const v2Router: trpc.TRPCBuiltRouter<{
     ctx: object;
     meta: object;
     errorShape: trpc.TRPCDefaultErrorShape;
     transformer: false;
 }, trpc.TRPCDecorateCreateRouterOptions<{
+    /**
+     * Fetch current USD exchange rates for all supported tokens (MPH/ETH/USDC)
+     */
     getExchangeRates: trpc.TRPCQueryProcedure<{
         input: void;
-        output: {
-            mph_price: any;
-            eth_price: any;
-            usdc_price: any;
-        };
+        output: TExchangeRates;
         meta: object;
     }>;
+    /**
+     * Fetch a list of supported markets for a given market type
+     */
     getMarketList: trpc.TRPCQueryProcedure<{
         input: {
             type?: "unique" | "stock" | "crypto" | "forex" | "position" | "commodity" | "index" | "prediction" | "f1" | "mlb" | undefined;
@@ -117,13 +165,14 @@ export declare const v2Router: trpc.TRPCBuiltRouter<{
             cursor?: number | null | undefined;
         } | undefined;
         output: {
-            markets: {
-                [key: string]: any;
-            };
+            markets: TMarketData;
             nextCursor: number | null;
         };
         meta: object;
     }>;
+    /**
+     * Fetch market detail data and history data points for a given market - normally used when a merket is selected or the market detils are required
+     */
     getMarketData: trpc.TRPCQueryProcedure<{
         input: {
             eth_address: string;
@@ -132,6 +181,9 @@ export declare const v2Router: trpc.TRPCBuiltRouter<{
         output: TMarketDetail;
         meta: object;
     }>;
+    /**
+     *  Fetch the order history for a given eth address.
+     */
     getOrders: trpc.TRPCQueryProcedure<{
         input: {
             eth_address: string;
@@ -142,28 +194,19 @@ export declare const v2Router: trpc.TRPCBuiltRouter<{
         output: TORders;
         meta: object;
     }>;
+    /**
+     *  Fetch the portfolio summary for a given eth address. The portfolio is created once the eth address "signs up" or first trades (this will auto sign up the user with no email address when the trade executes)
+     */
     getPortfolio: trpc.TRPCQueryProcedure<{
         input: {
             eth_address: string;
         } | undefined;
-        output: {
-            user_id: string;
-            eth_address: string;
-            email: string;
-            timestamp: number;
-            status: "email" | "airdrop" | "kyc" | "confirmed" | "email updated" | "migrated" | "migrating";
-            chain_id: number;
-            current_value: bigint;
-            cash_balance: bigint;
-            eth_balance: bigint;
-            tradeable_balance: bigint;
-            locked_rewards: bigint;
-            transferable_balance: bigint;
-            usdc_balance: string;
-            position_count: number;
-        };
+        output: TPortfolio;
         meta: object;
     }>;
+    /**
+     * Fetch a list of open positions and details for a given eth address.
+     */
     getPositions: trpc.TRPCQueryProcedure<{
         input: {
             eth_address: string;
@@ -173,22 +216,19 @@ export declare const v2Router: trpc.TRPCBuiltRouter<{
         output: TPosition[];
         meta: object;
     }>;
+    /**
+     * Fetch the returns history for a given eth address. Getch the returns history for the last day, week, month or year as dpecified in the type parameter. If no type is specified then it defaults to day.
+     */
     getReturns: trpc.TRPCQueryProcedure<{
         input: {
             eth_address: string;
+            type?: "d" | "w" | "m" | "y" | undefined;
         };
-        output: {
-            timestamp: number;
-            cash: number;
-            stake: number;
-            positions: number;
-            total: number;
-            returns: number;
-        }[];
+        output: TPortfolioDataPoint[] | null;
         meta: object;
     }>;
     /**
-     * Get the current value of the given position to be validated when the user created their close order
+     * Get the current value of the given position to be validated when the user creates an open or a close order. Also checks market status and current position to make sure the trade should be executable.
      */
     getPositionValue: trpc.TRPCQueryProcedure<{
         input: {
@@ -199,8 +239,8 @@ export declare const v2Router: trpc.TRPCBuiltRouter<{
         meta: object;
     }>;
     /**
- * Get the current value of the given position to be validated when the user created their close order
- */
+     * Get the market splits for a position - to be used to display the correct opening price and position history for a position that had market splits after opening.
+     */
     getPositionSplitValue: trpc.TRPCQueryProcedure<{
         input: {
             eth_address: string;
@@ -208,27 +248,15 @@ export declare const v2Router: trpc.TRPCBuiltRouter<{
             price_above: string;
             price_below: string;
         } | undefined;
-        output: {
-            eth_address: `0x${string}`;
-            market_id: string;
-            price_above: string;
-            price_below: string;
-            price_multiplier: number;
-            splits: any[];
-        };
+        output: TPositionSplit;
         meta: object;
     }>;
+    /**
+     * Get the current addresses for the tokens and relavant contracts from the backend. Also fetches the paymaster and chain info. Everything required to execute trades.
+     */
     getConfig: trpc.TRPCQueryProcedure<{
         input: void;
-        output: {
-            chain_id: number;
-            tokenAddress: `0x${string}`;
-            usdcAddress: `0x${string}`;
-            stateAddress: `0x${string}`;
-            oracleAddress: `0x${string}`;
-            bundler: string;
-            paymaster: string;
-        };
+        output: TConfig;
         meta: object;
     }>;
 }>>;
