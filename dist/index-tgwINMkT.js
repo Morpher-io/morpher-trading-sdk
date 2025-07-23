@@ -6286,7 +6286,7 @@ async function im(n, e) {
     });
     return Q === "0x" ? { data: void 0 } : { data: Q };
   } catch (_) {
-    const M = Z6(_), { offchainLookup: H, offchainLookupSignature: $ } = await import("./ccip-BbDobOnV.js");
+    const M = Z6(_), { offchainLookup: H, offchainLookupSignature: $ } = await import("./ccip-DdDN8gwA.js");
     if (n.ccipRead !== !1 && (M == null ? void 0 : M.slice(0, 10)) === $ && N)
       return { data: await H(n, { data: M, to: N }) };
     throw O && (M == null ? void 0 : M.slice(0, 10)) === "0x101bb98d" ? new kw({ factory: f }) : z6(_, {
@@ -30722,6 +30722,11 @@ class c7 {
       market_id: i
     });
   }
+  async getTrendingMarkets() {
+    if (!this.rpcClient)
+      throw new Error("No RPC Client");
+    return await this.rpcClient.getTrendingMarkets.query();
+  }
   async getPortfolio({
     eth_address: e
   }) {
@@ -30753,6 +30758,49 @@ class c7 {
     return await this.rpcClient.getReturns.query({
       eth_address: e,
       type: t
+    });
+  }
+  async getLeaderboard({
+    type: e,
+    eth_address: t,
+    app: r
+  }) {
+    if (!this.rpcClient)
+      throw new Error("No RPC Client");
+    return await this.rpcClient.getLeaderboard.query({
+      type: e,
+      eth_address: t,
+      app: r
+    });
+  }
+  async getContext({
+    eth_address: e,
+    app: t
+  }) {
+    if (!this.rpcClient)
+      throw new Error("No RPC Client");
+    return await this.rpcClient.getContext.query({
+      eth_address: e,
+      app: t
+    });
+  }
+  async setContext({
+    eth_address: e,
+    id: t,
+    app: r,
+    user_name: i,
+    display_name: s,
+    profile_image: a
+  }) {
+    if (!this.rpcClient)
+      throw new Error("No RPC Client");
+    return await this.rpcClient.setContext.mutate({
+      eth_address: e,
+      id: t,
+      app: r,
+      user_name: i,
+      display_name: s,
+      profile_image: a
     });
   }
   subscribeToMarket(e, t) {

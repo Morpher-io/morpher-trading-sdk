@@ -96,6 +96,24 @@ export interface TConfig {
     bundler: string;
     paymaster: string;
 }
+export type TLeaderBoard = {
+    id: string;
+    app: string;
+    eth_address: string;
+    display_name?: string;
+    profile_image?: string;
+    rank?: number;
+    returns?: number;
+    order_id?: string;
+    market_name?: string;
+};
+export type TContext = {
+    id: string;
+    eth_address: string;
+    user_name: string;
+    display_name: string;
+    profile_image: string;
+};
 export type StrictOHLCArray = [number, number, number, number, number];
 export interface TMarketDetail extends TMarket {
     pending_order_id?: string;
@@ -257,6 +275,52 @@ export declare const v2Router: trpc.TRPCBuiltRouter<{
     getConfig: trpc.TRPCQueryProcedure<{
         input: void;
         output: TConfig;
+        meta: object;
+    }>;
+    /**
+     * Get the external user context for a given application.
+     */
+    getContext: trpc.TRPCQueryProcedure<{
+        input: {
+            eth_address: string;
+            app: string;
+        };
+        output: TContext;
+        meta: object;
+    }>;
+    /**
+     * Set the external user context for a given application.
+     */
+    setContext: trpc.TRPCMutationProcedure<{
+        input: {
+            eth_address: string;
+            id: string;
+            app: string;
+            user_name?: string | undefined;
+            display_name?: string | undefined;
+            profile_image?: string | undefined;
+        };
+        output: TContext;
+        meta: object;
+    }>;
+    /**
+     * Get the leaderboard for a given application.
+     */
+    getLeaderboard: trpc.TRPCQueryProcedure<{
+        input: {
+            type: "order" | "returns";
+            eth_address: string;
+            app: string;
+        };
+        output: TLeaderBoard[];
+        meta: object;
+    }>;
+    /**
+     * Get a list of trending markets.
+     */
+    getTrendingMarkets: trpc.TRPCQueryProcedure<{
+        input: void;
+        output: TMarketData[];
         meta: object;
     }>;
 }>>;

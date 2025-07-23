@@ -119,6 +119,38 @@ export declare class MorpherTradeSDK {
         order_id?: string;
         market_id?: string;
     }): Promise<import('./v2.router').TORders>;
+    getTrendingMarkets(): Promise<Record<string | number, {
+        symbol: string;
+        name: string;
+        type: string;
+        status: string;
+        market_id: string;
+        open: number;
+        high: number;
+        low: number;
+        close: number;
+        change_percent: number;
+        is_paused: boolean;
+        exchange: string;
+        exchangeTimezone: string;
+        exchangeOpen: string;
+        exchangeClose: string;
+        pause_reason?: string | undefined;
+        volume?: number | undefined;
+        spread?: number | undefined;
+        change?: number | undefined;
+        timestamp?: number | undefined;
+        nextStatus?: string | undefined;
+        nextStatusTimestamp?: number | undefined;
+        market_delay?: number | undefined;
+        sector?: string | undefined;
+        limit_direction?: string | undefined;
+        max_leverage?: number | undefined;
+        min_position_age?: number | undefined;
+        country?: string | undefined;
+        market_cap?: number | undefined;
+        logo_image?: number | undefined;
+    }>[]>;
     getPortfolio({ eth_address, }: {
         eth_address: TAddress;
     }): Promise<{
@@ -153,6 +185,23 @@ export declare class MorpherTradeSDK {
         total: number;
         returns: number;
     }[] | null>;
+    getLeaderboard({ type, eth_address, app, }: {
+        type: "order" | "returns";
+        eth_address: TAddress;
+        app: string;
+    }): Promise<import('./v2.router').TLeaderBoard[]>;
+    getContext({ eth_address, app, }: {
+        eth_address: TAddress;
+        app: string;
+    }): Promise<import('./v2.router').TContext>;
+    setContext({ eth_address, id, app, user_name, display_name, profile_image, }: {
+        eth_address: TAddress;
+        id: string;
+        app: string;
+        user_name?: string;
+        display_name?: string;
+        profile_image?: string;
+    }): Promise<import('./v2.router').TContext>;
     private unsubscribeFromMarket?;
     subscribeToMarket(market_id: string, callback: any): void;
     private unsubscribeFromOrder?;

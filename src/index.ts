@@ -226,6 +226,16 @@ export class MorpherTradeSDK {
     return result;
   }
 
+   async getTrendingMarkets() {
+    if (!this.rpcClient) {
+      throw new Error("No RPC Client");
+    }
+
+    const result = await this.rpcClient.getTrendingMarkets.query();
+    return result;
+  }
+
+
   async getPortfolio({
     eth_address,
   }: {
@@ -276,6 +286,75 @@ export class MorpherTradeSDK {
     const result = await this.rpcClient.getReturns.query({
       eth_address,
       type,
+    });
+    return result;
+  }
+
+  async getLeaderboard({
+    type,
+    eth_address,
+    app,
+  }: {
+    type: "order" | "returns";
+    eth_address: TAddress;
+    app: string;
+  }) {
+    if (!this.rpcClient) {
+      throw new Error("No RPC Client");
+    }
+
+    const result = await this.rpcClient.getLeaderboard.query({
+      type,
+      eth_address,
+      app,
+    });
+    return result;
+  }
+
+  async getContext({
+    eth_address,
+    app,
+  }: {
+    eth_address: TAddress;
+    app: string;
+  }) {
+    if (!this.rpcClient) {
+      throw new Error("No RPC Client");
+    }
+
+    const result = await this.rpcClient.getContext.query({
+      eth_address,
+      app,
+    });
+    return result;
+  }
+
+  async setContext({
+    eth_address,
+    id,
+    app,
+    user_name,
+    display_name,
+    profile_image,
+  }: {
+    eth_address: TAddress;
+    id: string;
+    app: string;
+    user_name?: string;
+    display_name?: string;
+    profile_image?: string;
+  }) {
+    if (!this.rpcClient) {
+      throw new Error("No RPC Client");
+    }
+
+    const result = await this.rpcClient.setContext.mutate({
+      eth_address,
+      id,
+      app,
+      user_name,
+      display_name,
+      profile_image,
     });
     return result;
   }
