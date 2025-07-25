@@ -142,8 +142,8 @@ Fetches balances for different currencies (ETH, USDC, MPH) for a given address.
 
 ### Trading
 
-#### `executeTrade({ ... })`
-Executes a trade. This can be opening, increasing, decreasing, or closing a position.
+#### `openPosition({ ... })`
+Executes a trade. This can be opening or increasing a position.
 - `account`: A `viem` Account object.
 - `walletClient`: A `viem` WalletClient instance.
 - `publicClient`: A `viem` PublicClient instance.
@@ -152,8 +152,27 @@ Executes a trade. This can be opening, increasing, decreasing, or closing a posi
 - `direction`: `"long"` or `"short"`.
 - `leverage`: The desired leverage.
 - `tradeAmount`: The amount of currency to invest.
-- `closePercentage`: The percentage of the position to close.
 - `callback`: (Optional) A function to call with the trade result.
+
+#### `closePosition({ ... })`
+Closes a percentage of an existing open position (reduce the position or close it if closePercentage is 100%).
+- `account`: A `viem` Account object.
+- `walletClient`: A `viem` WalletClient instance.
+- `publicClient`: A `viem` PublicClient instance.
+- `market_id`: The ID of the market of the position to close.
+- `closePercentage`: The percentage of the position to close (e.g., `50` for 50%).
+- `callback`: (Optional) A function to call with the result.
+
+#### `setSLTP({ ... })`
+Adds a Stop-Loss and/or Take-Profit protection to an existing position.
+- `account`: A `viem` Account object.
+- `walletClient`: A `viem` WalletClient instance.
+- `publicClient`: A `viem` PublicClient instance.
+- `market_id`: The ID of the market of the position.
+- `priceAbove`: (Optional) The price for a take-profit on a long position, or a stop-loss on a short position.
+- `priceBelow`: (Optional) The price for a stop-loss on a long position, or a take-profit on a short position.
+- `callback`: (Optional) A function to call with the result.
+
 
 #### `cancelOrder({ ... })`
 Cancels a pending order.
