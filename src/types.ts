@@ -5,7 +5,7 @@ export type TExchangeRate = {
     usdc_price: any;
 } | undefined
 
-export type TMarketType =  "stock" | "forex" | "commodity" | "index"  // | "crypto" | "prediction" | "f1" | "mlb" | "unique" |
+export type TMarketType =  "stock" | "forex" | "commodity" | "index"  | "crypto" | "prediction" | "f1" | "mlb" | "unique";
 export type TCurrency = 'MPH' | 'USDC' | 'ETH'
 
 export type TAddress = `0x${string}`;
