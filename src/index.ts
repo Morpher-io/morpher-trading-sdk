@@ -450,7 +450,22 @@ export class MorpherTradeSDK {
     return result;
   }
 
-  private unsubscribeFromMarket?: () => void;
+  private marketSubscriptions: {
+    [market_id:string]: () => void;
+  } = {}
+  
+  /**
+   * Unsubscribe from the pricing updates for a specific market. 
+   * This should be done any time the subscription is no longer required or the pricing is not visible on the fronten
+   * @param market_id 
+   * @param callback 
+   */
+  public unsubscribeFromMarket(market_id: string) {
+    if (this.marketSubscriptions[market_id]) {
+      this.marketSubscriptions[market_id]();
+      delete this.marketSubscriptions[market_id]
+    }
+  }
 
   /**
    * Subscribe to pricing updates for a specific market.
@@ -465,11 +480,12 @@ export class MorpherTradeSDK {
       keepAlive: 10000,
     });
 
-    if (this.unsubscribeFromMarket) {
-      this.unsubscribeFromMarket();
+    if (this.marketSubscriptions[market_id]) {
+      this.marketSubscriptions[market_id]();
+      delete this.marketSubscriptions[market_id]
     }
 
-    this.unsubscribeFromMarket = client.subscribe(
+    this.marketSubscriptions[market_id] = client.subscribe(
       {
         query: `  subscription marketDataV2($market_id: String) {
           marketDataV2(market_id: $market_id)
@@ -478,7 +494,6 @@ export class MorpherTradeSDK {
       },
       {
         next: (dat: any) => {
-          console.log('market update', dat?.data?.marketDataV2)
           callback(dat?.data?.marketDataV2);
         },
         error: (err) => {
@@ -522,7 +537,6 @@ export class MorpherTradeSDK {
       },
       {
         next: (dat: any) => {
-          console.log('order dat', dat )
           callback(dat?.data?.orderExecutionV2);
         },
         error: (err) => {
@@ -568,7 +582,7 @@ export class MorpherTradeSDK {
 
     if (!this.oracleAddress) {
       if (callback) {
-        callback({ result: "error", err: "SDK not ready" });
+        callback({ result: "error", err: "SDK not ready", error_code: 'SDK_NOT_READY' });
       }
       return;
     }
@@ -682,7 +696,7 @@ export class MorpherTradeSDK {
 
     if (!this.oracleAddress) {
       if (callback) {
-        callback({ result: "error", err: "SDK not ready" });
+        callback({ result: "error", err: "SDK not ready", error_code: 'SDK_NOT_READY' });
       }
       return;
     }
@@ -693,6 +707,7 @@ export class MorpherTradeSDK {
         callback({
           result: "error",
           err: "No trade amount was specified",
+          error_code: 'INVALID_TRADE_AMOUNT'
         });
       }
       return;
@@ -751,7 +766,7 @@ export class MorpherTradeSDK {
 
     if (!this.oracleAddress) {
       if (callback) {
-        callback({ result: "error", err: "SDK not ready" });
+        callback({ result: "error", err: "SDK not ready", error_code: 'SDK_NOT_READY' });
       }
       return;
     }
@@ -764,7 +779,9 @@ export class MorpherTradeSDK {
       if (callback) {
         callback({
           result: "error",
-          err: "No limit price was specified. PLease specify a priceAbove or priceBelow",
+          err: "No limit price was specified. Please specify a priceAbove or priceBelow",
+          error_code: 'INVALID_LIMIT_PRICE'
+          
         });
       }
       return;
@@ -819,7 +836,7 @@ export class MorpherTradeSDK {
 
     if (!this.oracleAddress) {
       if (callback) {
-        callback({ result: "error", err: "SDK not ready" });
+        callback({ result: "error", err: "SDK not ready", error_code: 'SDK_NOT_READY' });
       }
       return;
     }
@@ -830,6 +847,7 @@ export class MorpherTradeSDK {
         callback({
           result: "error",
           err: "No close percentage specified",
+          error_code: 'INVALID_CLOSE_PERCENTAGE'
         });
       }
       return;
@@ -841,6 +859,7 @@ export class MorpherTradeSDK {
         callback({
           result: "error",
           err: "Close percentage cannot be negative",
+          error_code: 'INVALID_CLOSE_PERCENTAGE'
         });
       }
       return;
@@ -852,6 +871,7 @@ export class MorpherTradeSDK {
         callback({
           result: "error",
           err: "Close percentage cannot be more than 100",
+          error_code: 'INVALID_CLOSE_PERCENTAGE'
         });
       }
       return;
@@ -928,7 +948,7 @@ export class MorpherTradeSDK {
 
     if (!this.oracleAddress) {
       if (callback) {
-        callback({ result: "error", err: "SDK not ready" });
+        callback({ result: "error", err: "SDK not ready", error_code: 'SDK_NOT_READY' });
       }
       return;
     }
@@ -952,6 +972,7 @@ export class MorpherTradeSDK {
         callback({
           result: "error",
           err: "Error Fetching Market-Position - " + formatError(err),
+          error_code: formatError(err)
         });
       }
       return;
@@ -960,7 +981,7 @@ export class MorpherTradeSDK {
     if (tradeAmount && Number(tradeAmount) < 0) {
       this.orderCreating = false;
       if (callback) {
-        callback({ result: "error", err: "Trade amount cannot be negative" });
+        callback({ result: "error", err: "Trade amount cannot be negative", error_code: 'INVALID_TRADE_AMOUNT' });
       }
       return;
     }
@@ -971,6 +992,7 @@ export class MorpherTradeSDK {
         callback({
           result: "error",
           err: "Close percentage cannot be negative",
+          error_code: 'INVALID_CLOSE_PERCENTAGE'
         });
       }
       return;
@@ -985,6 +1007,7 @@ export class MorpherTradeSDK {
         callback({
           result: "error",
           err: "Must specify either a tradeAmount or a closePercentage",
+          error_code: 'INVALID_TRADE_AMOUNT'
         });
       }
       return;
@@ -1001,6 +1024,7 @@ export class MorpherTradeSDK {
         callback({
           result: "error",
           err: "You cannot specify both a tradeAmount and a closePercentage together",
+          error_code: 'INVALID_TRADE_AMOUNT'
         });
       }
       return;
@@ -1013,6 +1037,7 @@ export class MorpherTradeSDK {
           callback({
             result: "error",
             err: `You do not have enough ${currency} to process this order. `,
+            error_code: 'BALANCE_TOO_LOW'
           });
         }
         return;
@@ -1046,6 +1071,7 @@ export class MorpherTradeSDK {
         callback({
           result: "error",
           err: `You cannot trade in the opposite direction to an existing position. PLease close the existing position first. `,
+          error_code: 'TRADE_DIRECTION_ERROR'
         });
       }
       return;
@@ -1056,6 +1082,7 @@ export class MorpherTradeSDK {
         callback({
           result: "error",
           err: `An order is already executing. Can only execute one order at a time `,
+          error_code: 'UNPROCESSED_DELAYED_ORDER'
         });
       }
       return;
@@ -1115,7 +1142,8 @@ export class MorpherTradeSDK {
       if (callback) {
         callback({
           result: "error",
-          err: `Somehting went wrong. Could not resolve a open trade amount or a close shareds amount from the parameters provided.`,
+          err: `Somehting went wrong. Could not resolve a open trade amount or a close shares amount from the parameters provided.`,
+          error_code: 'INVALID_TRADE_AMOUNT'
         });
       }
       return;
@@ -1145,7 +1173,7 @@ export class MorpherTradeSDK {
       ) {
         this.orderCreating = false;
         if (callback) {
-          callback({ result: "error", err: `Position contract mismatch.` });
+          callback({ result: "error", err: `Position contract mismatch.`, error_code: 'POSITION_CONTRACT_MISMATCH' });
         }
       }
     } else {
@@ -1156,7 +1184,7 @@ export class MorpherTradeSDK {
       ) {
         this.orderCreating = false;
         if (callback) {
-          callback({ result: "error", err: `Position contract mismatch.` });
+          callback({ result: "error", err: `Position contract mismatch.`, error_code: 'POSITION_CONTRACT_MISMATCH' });
         }
       }
     }
@@ -1190,7 +1218,7 @@ export class MorpherTradeSDK {
         if (!splitValue.price_above || !splitValue.price_below) {
           this.orderCreating = false;
           if (callback) {
-            callback({ result: "error", err: `Position Contract Mismatch` });
+            callback({ result: "error", err: `Position Contract Mismatch`, error_code: 'POSITION_CONTRACT_MISMATCH' });
           }
         }
         priceAboveFormatted = splitValue.price_above;
@@ -1201,6 +1229,7 @@ export class MorpherTradeSDK {
           callback({
             result: "error",
             err: `Error fetching position split data`,
+            error_code: 'MARKET_SPLIT'
           });
         }
       }
@@ -1236,7 +1265,7 @@ export class MorpherTradeSDK {
         if (!currentPosition) {
           this.orderCreating = false;
           if (callback) {
-            callback({ result: "error", err: `POSITION_CONTRACT_MISMATCH` });
+            callback({ result: "error", err: `POSITION_CONTRACT_MISMATCH`, error_code: 'POSITION_CONTRACT_MISMATCH' });
           }
         }
 
@@ -1253,7 +1282,7 @@ export class MorpherTradeSDK {
         if (totalSharesValue < closeSharesValue) {
           this.orderCreating = false;
           if (callback) {
-            callback({ result: "error", err: `POSITION_CONTRACT_MISMATCH` });
+            callback({ result: "error", err: `POSITION_CONTRACT_MISMATCH`, error_code: 'POSITION_CONTRACT_MISMATCH' });
           }
         }
       }
@@ -1273,6 +1302,7 @@ export class MorpherTradeSDK {
           callback({
             result: "error",
             err: `Something went wrong - ORder creation timeout.`,
+            error_code: 'ORDER_TIMEOUT'
           });
         }
       }, 15000);
@@ -1403,6 +1433,7 @@ export class MorpherTradeSDK {
         callback({
           result: "error",
           err: `Error executing order: ${formatError(err)}`,
+          error_code: 'EXECUTION_ERROR'
         });
       }
     }

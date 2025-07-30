@@ -217,6 +217,9 @@ export declare class MorpherTradeSDK {
         transferable_balance: never;
         usdc_balance: string;
         position_count: number;
+        returns_rank?: number | undefined;
+        order_rank?: number | undefined;
+        profile_base64?: string | undefined;
     }>;
     /**
      * Fetch all the open positions for a given ETH address.
@@ -293,7 +296,14 @@ export declare class MorpherTradeSDK {
         display_name?: string;
         profile_image?: string;
     }): Promise<import('./v2.router').TContext>;
-    private unsubscribeFromMarket?;
+    private marketSubscriptions;
+    /**
+     * Unsubscribe from the pricing updates for a specific market.
+     * This should be done any time the subscription is no longer required or the pricing is not visible on the fronten
+     * @param market_id
+     * @param callback
+     */
+    unsubscribeFromMarket(market_id: string): void;
     /**
      * Subscribe to pricing updates for a specific market.
      * @param market_id

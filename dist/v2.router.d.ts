@@ -101,7 +101,7 @@ export type TLeaderBoard = {
     app: string;
     eth_address: string;
     display_name?: string;
-    profile_image?: string;
+    profile_base64?: string;
     rank?: number;
     returns?: number;
     order_id?: string;
@@ -112,7 +112,7 @@ export type TContext = {
     eth_address: string;
     user_name: string;
     display_name: string;
-    profile_image: string;
+    profile_base64: string;
 };
 export type StrictOHLCArray = [number, number, number, number, number];
 export interface TMarketDetail extends TMarket {
@@ -150,6 +150,9 @@ export interface TPortfolio {
     transferable_balance: bigint;
     usdc_balance: string;
     position_count: number;
+    returns_rank?: number;
+    order_rank?: number;
+    profile_base64?: string;
 }
 export interface TPortfolioDataPoint {
     timestamp: number;

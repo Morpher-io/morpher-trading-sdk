@@ -34,6 +34,7 @@ export interface ContractPosition {
 export type TTradeCallback = {
   result: "success" | "error";
   err?: string;
+  error_code?: string;
   callback_result?: any;
 };
 
