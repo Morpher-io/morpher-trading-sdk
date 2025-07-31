@@ -63,6 +63,14 @@ export type TOrder = {
     mph_price?: string;
     unadjusted_price?: string;
     chain_id?: number;
+    order_currency?: string;
+    order_amount?: string;
+    order_decimals?: number;
+    order_type?: string;
+    return_amount_mph?: string;
+    return_percentage?: number;
+    total_shares_sold?: string;
+    close_percentage?: number;
 };
 export type TPosition = {
     id: string;
