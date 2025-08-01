@@ -1033,8 +1033,6 @@ const getTokenPermit = async (walletClient: WalletClient, publicClient: PublicCl
 
     const chainId = walletClient.chain?.id || 1; // Default to mainnet if chain ID is not available
 
-
-
     const deadline = Math.round(Date.now() / 1000) + 4200;
 
     const tokenContract = getContract({
@@ -1159,7 +1157,7 @@ const getTokenPermit = async (walletClient: WalletClient, publicClient: PublicCl
 		) => {
 			try {
 			
-
+              
 				// 1. Get the permit for the input token
 				const inputTokenPermit = await getTokenPermit(walletClient, publicClient, tokenAddress, account, oracle_address, open_mph_token_amount_unscaled);
 				if (!inputTokenPermit) {
@@ -1174,8 +1172,7 @@ const getTokenPermit = async (walletClient: WalletClient, publicClient: PublicCl
 				// Assuming open_mph_token_amount_unscaled can be directly scaled to an 18-decimal MPH value if it's not already.
 				// For consistency with how sendCreateOrderGasless prepares amounts, we'll scale the unscaled input.
 				// This part might need adjustment depending on whether open_mph_token_amount_unscaled is already MPH or needs conversion.
-				const open_mph_amount_for_order_scaled = BigInt(Number(open_mph_token_amount_unscaled) * (10 ** 18)).toString();
-
+				const open_mph_amount_for_order_scaled = BigInt((Number(open_mph_token_amount_unscaled) / 10**6) * 10**18).toString()
 
 				// 2. Prepare EIP-712 domain and types for CreateOrder signature
 				const domain_order: TMessageDomain = {

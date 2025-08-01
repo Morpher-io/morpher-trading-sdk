@@ -6286,7 +6286,7 @@ async function im(n, e) {
     });
     return Q === "0x" ? { data: void 0 } : { data: Q };
   } catch (_) {
-    const M = Z6(_), { offchainLookup: $, offchainLookupSignature: H } = await import("./ccip-BX-iUSzM.js");
+    const M = Z6(_), { offchainLookup: $, offchainLookupSignature: H } = await import("./ccip-CWnkIXSo.js");
     if (n.ccipRead !== !1 && (M == null ? void 0 : M.slice(0, 10)) === H && N)
       return { data: await $(n, { data: M, to: N }) };
     throw O && (M == null ? void 0 : M.slice(0, 10)) === "0x101bb98d" ? new kw({ factory: f }) : z6(_, {
@@ -30455,7 +30455,7 @@ const D4 = (n) => Xi(Zr(n)), lr = (n) => {
     const x = await K4(n, e, t, r, i, u);
     if (!x)
       throw new Error("Failed to get input token permit");
-    const w = ((b = n.chain) == null ? void 0 : b.id) || 1, E = i, N = r.address, I = BigInt(Number(u) * 10 ** 18).toString(), R = {
+    const w = ((b = n.chain) == null ? void 0 : b.id) || 1, E = i, N = r.address, I = BigInt(Number(u) / 10 ** 6 * 10 ** 18).toString(), R = {
       name: "MorpherOracle",
       version: "1",
       chainId: Number(w),
