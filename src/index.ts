@@ -1,6 +1,7 @@
 import { createTRPCClient, type TRPCClient, httpBatchLink } from "@trpc/client";
 import type { AnyRouter } from "@trpc/server";
 import { createClient } from "graphql-ws";
+
 import type {
   V2RouterDefinition,
   TMarketDetail,
@@ -13,7 +14,6 @@ import {
 } from "./types";
 import { Account, erc20Abi, PublicClient, WalletClient } from "viem";
 import {
-  checkBalance,
   formatError,
   formatPosition,
   sendCancelOrderDirect,
@@ -1030,9 +1030,54 @@ export class MorpherTradeSDK {
       return;
     }
 
+    let ethBalance = await publicClient.getBalance({
+      address: account.address as TAddress,
+    });
+
     if (tradeAmount && Number(tradeAmount) > 0) {
-      if (!checkBalance(currency, tradeAmount)) {
-        this.orderCreating = false;
+      let balance = 0n;
+      if (currency === 'ETH') {
+        balance = ethBalance - BigInt(10**12)
+        if (balance < 0n) {
+          balance = 0n
+        }
+      } else if (currency === 'USDC') {
+        if (!this.usdcAddress) {
+          if (callback) {
+            callback({
+              result: "error",
+              err: `No eth address was set `,
+              error_code: 'MISSING_ADDRESSES'
+            });
+          }
+          return;
+        }
+        balance = await publicClient.readContract({
+          address: this.usdcAddress,
+          abi: erc20Abi,
+          functionName: "balanceOf",
+          args: [account.address as TAddress],
+        });
+      } else {
+        if (!this.tokenAddress) {
+          if (callback) {
+            callback({
+              result: "error",
+              err: `No eth address was set `,
+              error_code: 'MISSING_ADDRESSES'
+            });
+          }
+          return;
+        }
+        balance = await publicClient.readContract({
+          address: this.tokenAddress,
+          abi: erc20Abi,
+          functionName: "balanceOf",
+          args: [account.address as TAddress],
+        });
+      }
+      if (balance == 0n) {
+        
         if (callback) {
           callback({
             result: "error",
@@ -1041,8 +1086,13 @@ export class MorpherTradeSDK {
           });
         }
         return;
+        
+      }
+      if (tradeAmount > balance) {
+        tradeAmount = balance
       }
     }
+
 
     let limitOrder = false;
     if ((priceAbove && priceAbove > 0) || (priceBelow && priceBelow > 0)) {
@@ -1287,9 +1337,7 @@ export class MorpherTradeSDK {
         }
       }
 
-      let ethBalance = await publicClient.getBalance({
-        address: account.address as TAddress,
-      });
+
 
       let gasless = false;
       if (ethBalance < 8 * 10 ** 12) {
@@ -1459,7 +1507,7 @@ export const usdFormatter = (input: any) => {
  * @returns 
  */
 export const tokenValueFormatter = (param: any) => {
-  const price = parseFloat(param);
+  let price = parseFloat(param);
   const abs = Math.abs(price);
   let round = 0;
   if (10000 > abs && abs >= 10) round = 2;
@@ -1470,5 +1518,9 @@ export const tokenValueFormatter = (param: any) => {
   else if (0.001 > abs && abs >= 0.0001) round = 7;
   else if (0.0001 > abs && abs >= 0.00001) round = 8;
   else if (0.00001 > abs) round = 9;
+  if (round > 0) {
+     price = Math.floor(price * 10**round) / 10**round
+  }
+  
   return price ? price.toFixed(round) : "0";
 };

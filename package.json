@@ -1,7 +1,7 @@
 {
   "name": "morpher-trading-sdk",
   "private": false,
-  "version": "0.1.8",
+  "version": "0.1.9",
   "type": "module",
   "main": "./dist/morpher-trading-sdk.umd.cjs",
   "module": "./dist/morpher-trading-sdk.js",

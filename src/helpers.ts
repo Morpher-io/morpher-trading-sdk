@@ -4,11 +4,6 @@ import { TAddress, TMessageDomain, TSignMessage } from "./types";
 import { calculateUserOperationMaxGasCost, CandidePaymaster, MetaTransaction, SafeAccountV0_3_0 as SafeAccount } from "abstractionkit";
 
 
-export const checkBalance = (currency: string, amount: BigInt) => {
-    // NB--- TODO
-    return true
-}
-
 export const soliditySha3 = (data: string) => {
     const return_data = keccak256(toHex(data));
     return return_data

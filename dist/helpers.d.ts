@@ -1,7 +1,6 @@
 import { Account, PublicClient, WalletClient } from 'viem';
 import { TAddress } from './types';
 
-export declare const checkBalance: (currency: string, amount: BigInt) => boolean;
 export declare const soliditySha3: (data: string) => `0x${string}`;
 export declare const formatError: (error: Error) => string;
 export declare const formatPosition: (position: any) => {
