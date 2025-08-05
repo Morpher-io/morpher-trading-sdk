@@ -1,4 +1,4 @@
-import { M as e, v as o, u as t } from "./index-CLiJ5iys.js";
+import { M as e, v as o, u as t } from "./index-CZtEVEq4.js";
 export {
   e as MorpherTradeSDK,
   o as tokenValueFormatter,

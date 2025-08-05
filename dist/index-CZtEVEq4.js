@@ -6286,7 +6286,7 @@ async function im(n, e) {
     });
     return Q === "0x" ? { data: void 0 } : { data: Q };
   } catch (k) {
-    const D = Y6(k), { offchainLookup: $, offchainLookupSignature: H } = await import("./ccip-BQlDRGA6.js");
+    const D = Y6(k), { offchainLookup: $, offchainLookupSignature: H } = await import("./ccip-DmhQLm0U.js");
     if (n.ccipRead !== !1 && (D == null ? void 0 : D.slice(0, 10)) === H && N)
       return { data: await $(n, { data: D, to: N }) };
     throw O && (D == null ? void 0 : D.slice(0, 10)) === "0x101bb98d" ? new kw({ factory: f }) : z6(k, {
@@ -31282,7 +31282,7 @@ class cT {
     if (o && Number(o) > 0) {
       let R = 0n;
       if (s === "ETH")
-        R = y - BigInt(10 ** 12), R < 0n && (R = 0n);
+        R = y - BigInt(10 ** 14), R < 0n && (R = 0n);
       else if (s === "USDC") {
         if (!this.usdcAddress) {
           f && f({

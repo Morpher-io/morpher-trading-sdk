@@ -1037,7 +1037,7 @@ export class MorpherTradeSDK {
     if (tradeAmount && Number(tradeAmount) > 0) {
       let balance = 0n;
       if (currency === 'ETH') {
-        balance = ethBalance - BigInt(10**12)
+        balance = ethBalance - BigInt(10**14)
         if (balance < 0n) {
           balance = 0n
         }
