@@ -71,6 +71,8 @@ export type TOrder = {
     return_percentage?: number;
     total_shares_sold?: string;
     close_percentage?: number;
+    opening_price?: string;
+    opening_direction?: string;
 };
 export type TPosition = {
     id: string;
@@ -171,7 +173,9 @@ export interface TPortfolioDataPoint {
     returns: number;
 }
 export declare const v2Router: trpc.TRPCBuiltRouter<{
-    ctx: object;
+    ctx: {
+        ip_address: any;
+    };
     meta: object;
     errorShape: trpc.TRPCDefaultErrorShape;
     transformer: false;
