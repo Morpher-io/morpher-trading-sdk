@@ -29,6 +29,8 @@ export type TTradeCallback = {
     err?: string;
     error_code?: string;
     callback_result?: any;
+    tx_hash?: string;
+    order_id?: string;
 };
 export interface TMessageDomain {
     name: string;

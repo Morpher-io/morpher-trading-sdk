@@ -743,6 +743,38 @@ export const sendCreateOrderGasless = async (walletClient: WalletClient, publicC
 
         console.log('cost', cost)
 
+        const receipt = await publicClient.waitForTransactionReceipt({ hash: userOperationReceiptResult.receipt.transactionHash })
+
+        let order_id = ''
+
+        // load order data (after blockchain worker has been sorted) - set completed percentage and wait for order to be created in DB
+        if (receipt) {
+            if (
+                receipt &&
+                receipt.transactionHash &&
+                receipt.logs
+                
+            ) {
+
+                const logs = parseEventLogs({ 
+                    abi: morpherOracleAbi, 
+                    logs: receipt.logs,
+                    eventName: ['OrderCreated'], 
+
+                    })
+
+                logs.forEach((log: any) => {
+                    order_id = log?.args?._orderId
+                })
+            }
+        }
+
+
+        return {
+            transaction_hash: userOperationReceiptResult.receipt.transactionHash,
+            order_id: order_id
+        }
+
 
     } catch (err: any) {
         console.log('err', err.toString())
@@ -1397,7 +1429,34 @@ export const sendCreateOrderTokenGasless = async (walletClient: WalletClient, pu
 
         console.log('cost', cost)
 
+        const receipt = await publicClient.waitForTransactionReceipt({ hash: userOperationReceiptResult.receipt.transactionHash })
 
+        let order_id = ''
+
+        // load order data (after blockchain worker has been sorted) - set completed percentage and wait for order to be created in DB
+        if (receipt) {
+            if (
+                receipt &&
+                receipt.transactionHash &&
+                receipt.logs
+            ) {
+                const logs = parseEventLogs({ 
+                    abi: morpherOracleAbi, 
+                    logs: receipt.logs,
+                    eventName: ['OrderCreated'], 
+
+                    })
+
+                logs.forEach((log: any) => {
+                    order_id = log?.args?._orderId
+                })
+            }
+        }
+
+        return {
+            transaction_hash: userOperationReceiptResult.receipt.transactionHash,
+            order_id: order_id
+        }
   
     } catch (err: any) {
         console.log('err', err.toString())

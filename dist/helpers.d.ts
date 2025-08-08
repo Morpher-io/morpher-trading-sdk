@@ -24,9 +24,15 @@ export declare const sendCreateOrderDirect: (walletClient: WalletClient, publicC
     transaction_hash: `0x${string}`;
     order_id: string;
 }>;
-export declare const sendCreateOrderGasless: (walletClient: WalletClient, publicClient: PublicClient, account: Account, oracle_address: TAddress, bundler: string, paymasterAddress: string, market: string, close_shares_amount: any, open_mph_token_amount: any, direction: any, leverage: any, priceAbove: any, priceBelow: any, good_until: any, good_from: any, timeOut: any, submit_date: any, transaction_data: any, currentTimestamp: any) => Promise<void>;
+export declare const sendCreateOrderGasless: (walletClient: WalletClient, publicClient: PublicClient, account: Account, oracle_address: TAddress, bundler: string, paymasterAddress: string, market: string, close_shares_amount: any, open_mph_token_amount: any, direction: any, leverage: any, priceAbove: any, priceBelow: any, good_until: any, good_from: any, timeOut: any, submit_date: any, transaction_data: any, currentTimestamp: any) => Promise<{
+    transaction_hash: any;
+    order_id: string;
+} | undefined>;
 export declare const sendCreateOrderToken: (walletClient: WalletClient, publicClient: PublicClient, account: Account, oracle_address: TAddress, tradeTokenAddress: TAddress, morpherTokenAddress: TAddress, positionValue: BigInt, market: string, close_shares_amount: any, open_mph_token_amount: any, direction: any, leverage: any, priceAbove: any, priceBelow: any, good_until: any, good_from: any, timeOut: any, submit_date: any, transaction_data: any) => Promise<{
     transaction_hash: `0x${string}`;
     order_id: string;
 }>;
-export declare const sendCreateOrderTokenGasless: (walletClient: WalletClient, publicClient: PublicClient, account: Account, oracle_address: TAddress, tradeTokenAddress: TAddress, bundler: string, paymasterAddress: string, market: string, close_shares_amount: any, open_mph_token_amount: any, direction: any, leverage: any, priceAbove: any, priceBelow: any, good_until: any, good_from: any, timeOut: any, submit_date: any, transaction_data: any, currentTimestamp: any) => Promise<void>;
+export declare const sendCreateOrderTokenGasless: (walletClient: WalletClient, publicClient: PublicClient, account: Account, oracle_address: TAddress, tradeTokenAddress: TAddress, bundler: string, paymasterAddress: string, market: string, close_shares_amount: any, open_mph_token_amount: any, direction: any, leverage: any, priceAbove: any, priceBelow: any, good_until: any, good_from: any, timeOut: any, submit_date: any, transaction_data: any, currentTimestamp: any) => Promise<{
+    transaction_hash: any;
+    order_id: string;
+} | undefined>;

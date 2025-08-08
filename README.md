@@ -1,21 +1,21 @@
-# Morpher Trade SDK
+# Morpher Trading SDK
 
-The Morpher Trade SDK provides a comprehensive library for developers to integrate with the Morpher trading platform. It allows you to execute trades, manage orders, query market data, and check portfolio status programmatically.
+The Morpher Trading SDK provides a comprehensive library for developers to integrate with the Morpher trading platform. It allows you to execute trades, manage orders, query market data, and check portfolio status programmatically.
 
 This SDK is built with TypeScript and utilises `viem` for blockchain interactions and `tRPC` for communicating with the Morpher backend.
 
-For full documentation, visit [https://www.morpher.com/api/trading-sdk](https://www.morpher.com/api/trading-sdk).
+For full documentation, visit [https://api-docs.morpher.com/trading-sdk](https://api-docs.morpher.com/trading-sdk).
 
 ## Installation
 
 Install the SDK using npm or yarn:
 
 ```bash
-npm install morpher-trade-sdk
+npm install morpher-trading-sdk
 ```
 or
 ```bash
-yarn add morpher-trade-sdk
+yarn add morpher-trading-sdk
 ```
 
 ## Getting Started
@@ -27,7 +27,7 @@ Here's a quick example to get you started.
 First, you need to create an instance of the `MorpherTradeSDK` with the appropriate endpoint.
 
 ```typescript
-import { MorpherTradeSDK } from 'morpher-trade-sdk';
+import { MorpherTradeSDK } from 'morpher-trading-sdk';
 
 const sdk = new MorpherTradeSDK('https://api.morpher.com/v2');
 

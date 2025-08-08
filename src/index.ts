@@ -607,7 +607,7 @@ export class MorpherTradeSDK {
 
 
       if (callback) {
-        callback({ result: 'success', callback_result: result });
+        callback({ result: 'success', callback_result: result, tx_hash: result.transaction_hash });
       }
       return;
 
@@ -1355,9 +1355,13 @@ export class MorpherTradeSDK {
         }
       }, 15000);
 
+      let order_result: {
+        transaction_hash: `0x${string}`;
+        order_id: string;
+      } | undefined
       if (currency !== "MPH") {
         if (currency == "ETH") {
-          await sendCreateOrderGasToken(
+           order_result = await sendCreateOrderGasToken(
             walletClient,
             publicClient,
             account,
@@ -1378,7 +1382,7 @@ export class MorpherTradeSDK {
         } else {
           if (!gasless) {
             //
-            await sendCreateOrderToken(
+            order_result = await sendCreateOrderToken(
               walletClient,
               publicClient,
               account,
@@ -1400,7 +1404,7 @@ export class MorpherTradeSDK {
               transaction_data
             );
           } else {
-            await sendCreateOrderTokenGasless(
+            order_result = await sendCreateOrderTokenGasless(
               walletClient,
               publicClient,
               account,
@@ -1427,7 +1431,7 @@ export class MorpherTradeSDK {
         }
       } else if (!gasless) {
         //
-        await sendCreateOrderDirect(
+        order_result = await sendCreateOrderDirect(
           walletClient,
           publicClient,
           account,
@@ -1446,7 +1450,7 @@ export class MorpherTradeSDK {
           transaction_data
         );
       } else {
-        await sendCreateOrderGasless(
+        order_result = await sendCreateOrderGasless(
           walletClient,
           publicClient,
           account,
@@ -1472,6 +1476,8 @@ export class MorpherTradeSDK {
       if (callback) {
         callback({
           result: "success",
+          tx_hash: order_result?.transaction_hash,
+          order_id: order_result?.order_id,
         });
       }
 
