@@ -116,6 +116,7 @@ export type TLeaderBoard = {
     returns?: number;
     order_id?: string;
     market_name?: string;
+    leaderboard_start_date?: number;
 };
 export type TContext = {
     id: string;

@@ -603,13 +603,25 @@ const getOracleCallPermitCalldata = async (walletClient: WalletClient, account: 
                 }, account.address as TAddress, deadline, Number(hexToSig.v), hexToSig.r, hexToSig.s]
             })
 
-            return oracleCalldata;
+            return {
+                data: oracleCalldata,
+                success: true,
+                error: ''
+            };
 
         }
-        return "0x";
-    } catch (err) {
+        return {
+                data: '0x',
+                success: false,
+                error: 'no signature'
+            };
+    } catch (err: any) {
         console.log('error in getOracleCallPermitCalldata', err)
-        return "0x";
+        return {
+            data: '0x',
+            success: false,
+            error: err.toString()
+        };
     }
 }
 
@@ -642,9 +654,9 @@ export const sendCreateOrderGasless = async (walletClient: WalletClient, publicC
         
 
         if (!oracleCallPermitCalldata) return;
-        if (oracleCallPermitCalldata == "0x") {
+        if (oracleCallPermitCalldata.success == false || oracleCallPermitCalldata.data == '0x') {
             clearTimeout(timeOut);
-            throw new Error(`ORACLE_CALL_GENERATION_FAILED`);
+            throw new Error(oracleCallPermitCalldata.error || `ORACLE_CALL_GENERATION_FAILED`);
         }
 
         const chainId = walletClient.chain?.id || 1; // Default to mainnet if chain ID is not available
@@ -652,7 +664,7 @@ export const sendCreateOrderGasless = async (walletClient: WalletClient, publicC
         const transaction :MetaTransaction ={
             to: oracle_address,
             value: 0n,
-            data: oracleCallPermitCalldata,
+            data: oracleCallPermitCalldata.data,
         }
 
 

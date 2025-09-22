@@ -6286,7 +6286,7 @@ async function im(n, e) {
     });
     return Q === "0x" ? { data: void 0 } : { data: Q };
   } catch (L) {
-    const D = Y6(L), { offchainLookup: $, offchainLookupSignature: H } = await import("./ccip-CqcfOePk.js");
+    const D = Y6(L), { offchainLookup: $, offchainLookupSignature: H } = await import("./ccip-DNvE71pc.js");
     if (n.ccipRead !== !1 && (D == null ? void 0 : D.slice(0, 10)) === H && N)
       return { data: await $(n, { data: D, to: N }) };
     throw O && (D == null ? void 0 : D.slice(0, 10)) === "0x101bb98d" ? new kw({ factory: f }) : z6(L, {
@@ -30088,25 +30088,37 @@ const D4 = (n) => Xi(Yr(n)), lr = (n) => {
     });
     if (E) {
       const N = await Zo(E);
-      return ei({
-        abi: rt,
-        functionName: "createOrderPermittedBySignature",
-        args: [{
-          _marketId: s,
-          _closeSharesAmount: a,
-          _openMPHTokenAmount: o,
-          _tradeDirection: c,
-          _orderLeverage: u,
-          _onlyIfPriceAbove: l,
-          _onlyIfPriceBelow: d,
-          _goodUntil: f,
-          _goodFrom: p
-        }, e.address, i, Number(N.v), N.r, N.s]
-      });
+      return {
+        data: ei({
+          abi: rt,
+          functionName: "createOrderPermittedBySignature",
+          args: [{
+            _marketId: s,
+            _closeSharesAmount: a,
+            _openMPHTokenAmount: o,
+            _tradeDirection: c,
+            _orderLeverage: u,
+            _onlyIfPriceAbove: l,
+            _onlyIfPriceBelow: d,
+            _goodUntil: f,
+            _goodFrom: p
+          }, e.address, i, Number(N.v), N.r, N.s]
+        }),
+        success: !0,
+        error: ""
+      };
     }
-    return "0x";
+    return {
+      data: "0x",
+      success: !1,
+      error: "no signature"
+    };
   } catch (h) {
-    return console.log("error in getOracleCallPermitCalldata", h), "0x";
+    return console.log("error in getOracleCallPermitCalldata", h), {
+      data: "0x",
+      success: !1,
+      error: h.toString()
+    };
   }
 }, j4 = async (n, e, t, r, i, s, a, o, c, u, l, d, f, p, y, h, b, x, w) => {
   var E;
@@ -30122,12 +30134,12 @@ const D4 = (n) => Xi(Yr(n)), lr = (n) => {
     (!w || w == 0) && (w = Date.now());
     const U = BigInt(Math.round(w / 1e3) + 180), C = await z4(n, t, r, B, U, a, o, c, u, l, d, f, p, y);
     if (clearTimeout(h), !C) return;
-    if (C == "0x")
-      throw clearTimeout(h), new Error("ORACLE_CALL_GENERATION_FAILED");
+    if (C.success == !1 || C.data == "0x")
+      throw clearTimeout(h), new Error(C.error || "ORACLE_CALL_GENERATION_FAILED");
     const v = ((E = n.chain) == null ? void 0 : E.id) || 1, M = {
       to: r,
       value: 0n,
-      data: C
+      data: C.data
     };
     let O = await N.createUserOperation(
       [
