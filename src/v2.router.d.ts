@@ -119,11 +119,15 @@ export type TLeaderBoard = {
     leaderboard_start_date?: number;
 };
 export type TContext = {
+    app?: string;
     id: string;
     eth_address: string;
     user_name: string;
     display_name: string;
     profile_base64: string;
+    platformType?: string;
+    clientFid?: number;
+    added?: boolean;
 };
 export type StrictOHLCArray = [number, number, number, number, number];
 export interface TMarketDetail extends TMarket {
@@ -315,6 +319,9 @@ export declare const v2Router: trpc.TRPCBuiltRouter<{
             user_name?: string | undefined;
             display_name?: string | undefined;
             profile_image?: string | undefined;
+            platformType?: string | undefined;
+            clientFid?: number | undefined;
+            added?: boolean | undefined;
         };
         output: TContext;
         meta: object;
