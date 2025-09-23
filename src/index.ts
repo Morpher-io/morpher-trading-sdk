@@ -427,6 +427,9 @@ export class MorpherTradeSDK {
     user_name,
     display_name,
     profile_image,
+    platformType,
+    clientFid,
+    added
   }: {
     eth_address: TAddress;
     id: string;
@@ -434,6 +437,9 @@ export class MorpherTradeSDK {
     user_name?: string;
     display_name?: string;
     profile_image?: string;
+    platformType?: string;
+    clientFid?: number;
+    added?: boolean;
   }) {
     if (!this.rpcClient) {
       throw new Error("No RPC Client");
@@ -446,6 +452,9 @@ export class MorpherTradeSDK {
       user_name,
       display_name,
       profile_image,
+      platformType,
+      clientFid,
+      added
     });
     return result;
   }

@@ -6125,7 +6125,7 @@ async function ib(n, e) {
     });
     return q === "0x" ? { data: void 0 } : { data: q };
   } catch (R) {
-    const L = ew(R), { offchainLookup: M, offchainLookupSignature: D } = await import("./ccip-8Dih4fCd.js");
+    const L = ew(R), { offchainLookup: M, offchainLookupSignature: D } = await import("./ccip-B1IUA9vI.js");
     if (n.ccipRead !== !1 && (L == null ? void 0 : L.slice(0, 10)) === D && E)
       return { data: await M(n, { data: L, to: E }) };
     throw k && (L == null ? void 0 : L.slice(0, 10)) === "0x101bb98d" ? new $6({ factory: d }) : Q5(R, {
@@ -30907,7 +30907,10 @@ class fv {
     app: r,
     user_name: i,
     display_name: s,
-    profile_image: a
+    profile_image: a,
+    platformType: o,
+    clientFid: c,
+    added: u
   }) {
     if (!this.rpcClient)
       throw new Error("No RPC Client");
@@ -30917,7 +30920,10 @@ class fv {
       app: r,
       user_name: i,
       display_name: s,
-      profile_image: a
+      profile_image: a,
+      platformType: o,
+      clientFid: c,
+      added: u
     });
   }
   /**

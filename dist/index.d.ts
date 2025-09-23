@@ -288,13 +288,16 @@ export declare class MorpherTradeSDK {
      * @param options.profile_image - Optional URL to a profile image.
      * @returns
      */
-    setContext({ eth_address, id, app, user_name, display_name, profile_image, }: {
+    setContext({ eth_address, id, app, user_name, display_name, profile_image, platformType, clientFid, added }: {
         eth_address: TAddress;
         id: string;
         app: string;
         user_name?: string;
         display_name?: string;
         profile_image?: string;
+        platformType?: string;
+        clientFid?: number;
+        added?: boolean;
     }): Promise<import('./v2.router').TContext>;
     private marketSubscriptions;
     /**
