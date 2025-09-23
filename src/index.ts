@@ -1178,12 +1178,16 @@ export class MorpherTradeSDK {
         }
 
         if (currentPosition.direction === "long") {
+          direction = 'short'
+          leverage = (Number(currentPosition.average_leverage || 100000000) / 10**8);
           close_shares_amount = (
             (BigInt(currentPosition.long_shares) *
               BigInt(closePercentage || 0)) /
             BigInt(100)
           ).toString();
         } else if (currentPosition.direction === "short") {
+          leverage = (Number(currentPosition.average_leverage || 100000000) / 10**8);
+          direction = 'long'
           close_shares_amount = (
             (BigInt(currentPosition.short_shares) *
               BigInt(closePercentage || 0)) /

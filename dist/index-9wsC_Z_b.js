@@ -6125,7 +6125,7 @@ async function ib(n, e) {
     });
     return q === "0x" ? { data: void 0 } : { data: q };
   } catch (R) {
-    const L = ew(R), { offchainLookup: M, offchainLookupSignature: D } = await import("./ccip-B1IUA9vI.js");
+    const L = ew(R), { offchainLookup: M, offchainLookupSignature: D } = await import("./ccip-BzkJvI12.js");
     if (n.ccipRead !== !1 && (L == null ? void 0 : L.slice(0, 10)) === D && E)
       return { data: await M(n, { data: L, to: E }) };
     throw k && (L == null ? void 0 : L.slice(0, 10)) === "0x101bb98d" ? new $6({ factory: d }) : Q5(R, {
@@ -31386,7 +31386,7 @@ class fv {
     else if (f && (f || 0) > 0 && p) {
       if ((f || 0) > 100)
         return;
-      p.direction === "long" ? w = (BigInt(p.long_shares) * BigInt(f || 0) / BigInt(100)).toString() : p.direction === "short" && (w = (BigInt(p.short_shares) * BigInt(f || 0) / BigInt(100)).toString());
+      p.direction === "long" ? (a = "short", c = Number(p.average_leverage || 1e8) / 10 ** 8, w = (BigInt(p.long_shares) * BigInt(f || 0) / BigInt(100)).toString()) : p.direction === "short" && (c = Number(p.average_leverage || 1e8) / 10 ** 8, a = "long", w = (BigInt(p.short_shares) * BigInt(f || 0) / BigInt(100)).toString());
     }
     if ((!m || m <= 0) && (!w || Number(w) <= 0)) {
       this.orderCreating = !1, d && d({
