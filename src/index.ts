@@ -18,12 +18,15 @@ import {
   formatPosition,
   sendCancelOrderDirect,
   sendCancelOrderGasless,
+  sendCancelOrderSmartWallet,
   sendCreateOrderDirect,
   sendCreateOrderGasless,
   sendCreateOrderGasToken,
   sendCreateOrderToken,
   sendCreateOrderTokenGasless,
+  sendCreateOrderTokenWallet,
   soliditySha3,
+  sendCreateOrderSmartWallet
 } from "./helpers";
 import { morpherStateAbi } from "./abi";
 export type TradeCallback = TTradeCallback;
@@ -577,6 +580,7 @@ export class MorpherTradeSDK {
     order_id,
     market_id,
     callback,
+    gaslessOverride,
   }: {
     account: Account;
     walletClient: WalletClient;
@@ -584,6 +588,7 @@ export class MorpherTradeSDK {
     order_id: string;
     market_id: string;
     callback?: (result: TTradeCallback) => void;
+    gaslessOverride?: boolean;
   }) {
     if (!this.rpcClient) {
       throw new Error("No RPC Client");
@@ -599,9 +604,11 @@ export class MorpherTradeSDK {
        
     let ethBalance = await publicClient.getBalance({ address: account.address as TAddress });
 
-    let gasless = false;
-    if (ethBalance < 8* 10**12) {
+    let gasless: boolean;
+    if (gaslessOverride === true) {
       gasless = true;
+    } else {
+      gasless = ethBalance < 8 * 10 ** 12;
     }
 
    
@@ -621,42 +628,85 @@ export class MorpherTradeSDK {
       return;
 
     } else {
-      let currentTimestamp = 0;
+      let paymasterWallet = false;
       try {
-        const currentPosition = await this.rpcClient.getPositionValue.query({
-            eth_address: account.address as TAddress,
-            market_id,
+        const capabilities: any = await walletClient.getCapabilities({
+          account,
+          chainId: walletClient.chain?.id,
         });
+        
+        console.log('capabilities', capabilities)
 
-
-        currentTimestamp = currentPosition?.timestamp || 0;
-
-
-      } catch (err: any) {
-        currentTimestamp = Date.now()
-
+        if (capabilities && capabilities?.paymasterService?.supported === true) {
+          paymasterWallet = true;
+        }
+      } catch (err) {
+        paymasterWallet = false;
       }
 
-      if (!currentTimestamp || currentTimestamp == 0) {
-        currentTimestamp = Date.now()
-      }	
-      
-      const callback_result = await sendCancelOrderGasless(
+      if (paymasterWallet) {
+        let timeOut = setTimeout(() => {
+          if (callback) {
+            callback({
+              result: "error",
+              err: `Something went wrong - Order cancellation timeout.`,
+              error_code: 'ORDER_TIMEOUT'
+            });
+          }
+        }, 15000);
+
+        const result = await sendCancelOrderSmartWallet(
           walletClient,
-          publicClient,
           account,
           this.oracleAddress || "0x",
-          this.bundler || "",
-          this.paymaster || "",
           order_id as TAddress,
-          currentTimestamp
-        )
+          timeOut,
+          this.paymaster
+        );
 
-          
-      if (callback) {
-        callback({ result: 'success', callback_result });
+        if (callback) {
+          callback({ result: 'success', callback_result: result, tx_hash: result.transaction_hash });
+        }
+        return;
+
+      } else {
+        let currentTimestamp = 0;
+        try {
+          const currentPosition = await this.rpcClient.getPositionValue.query({
+              eth_address: account.address as TAddress,
+              market_id,
+          });
+
+
+          currentTimestamp = currentPosition?.timestamp || 0;
+
+
+        } catch (err: any) {
+          currentTimestamp = Date.now()
+
+        }
+
+        if (!currentTimestamp || currentTimestamp == 0) {
+          currentTimestamp = Date.now()
+        }	
+        
+        const callback_result = await sendCancelOrderGasless(
+            walletClient,
+            publicClient,
+            account,
+            this.oracleAddress || "0x",
+            this.bundler || "",
+            this.paymaster || "",
+            order_id as TAddress,
+            currentTimestamp
+          )
+
+            
+        if (callback) {
+          callback({ result: 'success', callback_result });
+        }
+        return;
       }
-      return;
     }
 			
   }
@@ -687,6 +737,8 @@ export class MorpherTradeSDK {
     tradeAmount,
     leverage,
     callback,
+    gaslessOverride,
+
   }: {
     account: Account;
     walletClient: WalletClient;
@@ -697,6 +749,7 @@ export class MorpherTradeSDK {
     leverage: number;
     tradeAmount: bigint;
     callback?: (result: TTradeCallback) => void;
+    gaslessOverride?: boolean;
   }) {
 
     if (!this.rpcClient) {
@@ -732,6 +785,7 @@ export class MorpherTradeSDK {
       tradeAmount,
       leverage,
       callback,
+      gaslessOverride
     })
 
   }
@@ -759,6 +813,7 @@ export class MorpherTradeSDK {
     priceAbove,
     priceBelow,
     callback,
+    gaslessOverride,
   }: {
     account: Account;
     walletClient: WalletClient;
@@ -767,6 +822,7 @@ export class MorpherTradeSDK {
     priceAbove?: number;
     priceBelow?: number;
     callback?: (result: TTradeCallback) => void;
+    gaslessOverride?: boolean;
   }) {
 
     if (!this.rpcClient) {
@@ -806,7 +862,8 @@ export class MorpherTradeSDK {
       leverage: 1,
       priceAbove,
       priceBelow,
-      callback
+      callback,
+      gaslessOverride
     })
 
   }
@@ -830,6 +887,7 @@ export class MorpherTradeSDK {
     market_id,
     closePercentage,
     callback,
+    gaslessOverride,
   }: {
     account: Account;
     walletClient: WalletClient;
@@ -837,6 +895,7 @@ export class MorpherTradeSDK {
     market_id: string;
     closePercentage: number;
     callback?: (result: TTradeCallback) => void;
+    gaslessOverride?: boolean;
   }) {
 
     if (!this.rpcClient) {
@@ -896,6 +955,7 @@ export class MorpherTradeSDK {
       leverage: 1,
       closePercentage,
       callback,
+      gaslessOverride
     })
   }
 
@@ -930,6 +990,7 @@ export class MorpherTradeSDK {
     priceBelow,
     closePercentage,
     callback,
+    gaslessOverride,
   }: {
     account: Account;
     walletClient: WalletClient;
@@ -943,6 +1004,7 @@ export class MorpherTradeSDK {
     priceAbove?: number;
     priceBelow?: number;
     callback?: (result: TTradeCallback) => void;
+    gaslessOverride?: boolean;
   }) {
     if (!closePercentage) {
       closePercentage = 0;
@@ -1352,9 +1414,11 @@ export class MorpherTradeSDK {
 
 
 
-      let gasless = false;
-      if (ethBalance < 8 * 10 ** 12) {
+      let gasless: boolean;
+      if (gaslessOverride === true) {
         gasless = true;
+      } else {
+        gasless = ethBalance < 8 * 10 ** 12;
       }
 
       let timeOut = setTimeout(() => {
@@ -1417,29 +1481,70 @@ export class MorpherTradeSDK {
               transaction_data
             );
           } else {
-            order_result = await sendCreateOrderTokenGasless(
-              walletClient,
-              publicClient,
-              account,
-              this.oracleAddress || "0x",
-              this.usdcAddress || "0x",
-              this.bundler || "",
-              this.paymaster || "",
+            let paymasterWallet = false;
+            try {
+              const capabilities: any = await walletClient.getCapabilities({
+                account,
+                chainId: walletClient.chain?.id,
+              });
 
-              market,
-              String(close_shares_amount),
-              open_mph_token_amount,
-              direction === "long" ? true : false,
-              BigInt(Math.round(leverage * 10 ** 8)).toString(),
-              limitOrder ? priceAboveFormatted : "0",
-              limitOrder ? priceBelowFormatted : "0",
-              good_until,
-              good_from,
-              timeOut,
-              submit_date,
-              transaction_data,
-              currentTimestamp
-            );
+                          console.log('capabilities', capabilities)
+              if (
+                capabilities &&
+                capabilities?.paymasterService?.supported === true
+              ) {
+                paymasterWallet = true;
+              }
+            } catch (err) {
+              paymasterWallet = false;
+            }
+
+            if (paymasterWallet) {
+              order_result = await sendCreateOrderTokenWallet(
+                walletClient,
+                publicClient,
+                account,
+                this.oracleAddress || "0x",
+                this.usdcAddress || "0x",
+                this.tokenAddress || "0x",
+                currentPosition?.value || 0n,
+                market,
+                String(close_shares_amount),
+                open_mph_token_amount,
+                direction === "long" ? true : false,
+                BigInt(Math.round(leverage * 10 ** 8)).toString(),
+                limitOrder ? priceAboveFormatted : "0",
+                limitOrder ? priceBelowFormatted : "0",
+                good_until,
+                good_from,
+                timeOut,
+                this.paymaster
+              );
+            } else {
+              order_result = await sendCreateOrderTokenGasless(
+                walletClient,
+                publicClient,
+                account,
+                this.oracleAddress || "0x",
+                this.usdcAddress || "0x",
+                this.bundler || "",
+                this.paymaster || "",
+
+                market,
+                String(close_shares_amount),
+                open_mph_token_amount,
+                direction === "long" ? true : false,
+                BigInt(Math.round(leverage * 10 ** 8)).toString(),
+                limitOrder ? priceAboveFormatted : "0",
+                limitOrder ? priceBelowFormatted : "0",
+                good_until,
+                good_from,
+                timeOut,
+                submit_date,
+                transaction_data,
+                currentTimestamp
+              );
+            }
           }
         }
       } else if (!gasless) {
@@ -1463,27 +1568,66 @@ export class MorpherTradeSDK {
           transaction_data
         );
       } else {
-        order_result = await sendCreateOrderGasless(
-          walletClient,
-          publicClient,
-          account,
-          this.oracleAddress || "0x",
-          this.bundler || "",
-          this.paymaster || "",
-          market,
-          String(close_shares_amount),
-          BigInt(Number(open_mph_token_amount)).toString(),
-          direction === "long" ? true : false,
-          BigInt(Math.round(leverage * 10 ** 8)).toString(),
-          limitOrder ? priceAboveFormatted : "0",
-          limitOrder ? priceBelowFormatted : "0",
-          good_until,
-          good_from,
-          timeOut,
-          submit_date,
-          transaction_data,
-          currentTimestamp
-        );
+        let paymasterWallet = false;
+
+        try{
+		      const capabilities:any = await walletClient.getCapabilities({
+							account,
+							chainId: walletClient.chain?.id, 
+						})
+            console.log('capabilities', capabilities)
+
+          if (capabilities && capabilities?.paymasterService?.supported === true) {
+            paymasterWallet = true;
+          }
+
+        } catch (err) {
+          paymasterWallet = false
+        }
+
+      
+        if (paymasterWallet) {
+          order_result = await sendCreateOrderSmartWallet(
+            walletClient,
+            account,
+            this.oracleAddress || "0x",
+            market,
+            String(close_shares_amount),
+            BigInt(Number(open_mph_token_amount)).toString(),
+            direction === "long" ? true : false,
+            BigInt(Math.round(leverage * 10 ** 8)).toString(),
+            limitOrder ? priceAboveFormatted : "0",
+            limitOrder ? priceBelowFormatted : "0",
+            good_until,
+            good_from,
+            timeOut,
+            this.paymaster
+          );
+
+        } else {
+
+          order_result = await sendCreateOrderGasless(
+            walletClient,
+            publicClient,
+            account,
+            this.oracleAddress || "0x",
+            this.bundler || "",
+            this.paymaster || "",
+            market,
+            String(close_shares_amount),
+            BigInt(Number(open_mph_token_amount)).toString(),
+            direction === "long" ? true : false,
+            BigInt(Math.round(leverage * 10 ** 8)).toString(),
+            limitOrder ? priceAboveFormatted : "0",
+            limitOrder ? priceBelowFormatted : "0",
+            good_until,
+            good_from,
+            timeOut,
+            submit_date,
+            transaction_data,
+            currentTimestamp
+          );
+        }
       }
 
       if (callback) {

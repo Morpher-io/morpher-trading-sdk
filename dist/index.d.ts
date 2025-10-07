@@ -334,13 +334,14 @@ export declare class MorpherTradeSDK {
      * @param options.callback - Optional callback function for trade results.
      * @returns
      */
-    cancelOrder({ account, walletClient, publicClient, order_id, market_id, callback, }: {
+    cancelOrder({ account, walletClient, publicClient, order_id, market_id, callback, gaslessOverride, }: {
         account: Account;
         walletClient: WalletClient;
         publicClient: PublicClient;
         order_id: string;
         market_id: string;
         callback?: (result: TTradeCallback) => void;
+        gaslessOverride?: boolean;
     }): Promise<void>;
     /**
     * Open a new position on a market or extend an existing position. If a position already exists, then you can only extend in the same direction.
@@ -358,7 +359,7 @@ export declare class MorpherTradeSDK {
     * @param options.callback - Optional callback function for trade results. This callback will only show that the order was created. the orderSubscription is required to see when the trade is actually executed and the position is created. This could be a much later for stock markets that are only ticking durin market hours. Between order ceation and execution there is a pending order and the MPH that was sent for the order is in escrow. The pending order must be cancelled if the order is no longer required and tokens are to be returned to the users account.
     * @returns
     */
-    openPosition({ account, walletClient, publicClient, market_id, currency, direction, tradeAmount, leverage, callback, }: {
+    openPosition({ account, walletClient, publicClient, market_id, currency, direction, tradeAmount, leverage, callback, gaslessOverride, }: {
         account: Account;
         walletClient: WalletClient;
         publicClient: PublicClient;
@@ -368,6 +369,7 @@ export declare class MorpherTradeSDK {
         leverage: number;
         tradeAmount: bigint;
         callback?: (result: TTradeCallback) => void;
+        gaslessOverride?: boolean;
     }): Promise<void>;
     /**
     * Add a Stop-Loss or Take-Profit protection order on a market where you have a current open position.
@@ -384,7 +386,7 @@ export declare class MorpherTradeSDK {
     * @param options.callback - Optional callback function for trade results.
     * @returns
     */
-    setSLTP({ account, walletClient, publicClient, market_id, priceAbove, priceBelow, callback, }: {
+    setSLTP({ account, walletClient, publicClient, market_id, priceAbove, priceBelow, callback, gaslessOverride, }: {
         account: Account;
         walletClient: WalletClient;
         publicClient: PublicClient;
@@ -392,6 +394,7 @@ export declare class MorpherTradeSDK {
         priceAbove?: number;
         priceBelow?: number;
         callback?: (result: TTradeCallback) => void;
+        gaslessOverride?: boolean;
     }): Promise<void>;
     /**
      * Execute a closing trade on a market where you have a current open position.
@@ -405,13 +408,14 @@ export declare class MorpherTradeSDK {
      * @param options.callback - Optional callback function for trade results.
      * @returns
      */
-    closePosition({ account, walletClient, publicClient, market_id, closePercentage, callback, }: {
+    closePosition({ account, walletClient, publicClient, market_id, closePercentage, callback, gaslessOverride, }: {
         account: Account;
         walletClient: WalletClient;
         publicClient: PublicClient;
         market_id: string;
         closePercentage: number;
         callback?: (result: TTradeCallback) => void;
+        gaslessOverride?: boolean;
     }): Promise<void>;
     /**
      * Internal function to execute a trade.

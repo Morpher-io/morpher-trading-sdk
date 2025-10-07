@@ -1,7 +1,7 @@
 {
   "name": "morpher-trading-sdk",
   "private": false,
-  "version": "0.1.18",
+  "version": "0.1.19",
   "type": "module",
   "main": "./dist/morpher-trading-sdk.umd.cjs",
   "module": "./dist/morpher-trading-sdk.js",
@@ -29,7 +29,7 @@
     "format": "biome format --write ."
   },
   "peerDependencies": {
-    "viem": "^2.31.7"
+    "viem": "^2.38.0"
   },
   "dependencies": {
     "@trpc/client": "^11.4.2",
