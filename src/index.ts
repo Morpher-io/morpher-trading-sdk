@@ -45,6 +45,7 @@ export class MorpherTradeSDK {
   private clientURLWs = "";
   private bundler?: string;
   private paymaster?: string;
+  private paymaster_base?: string;
   public ready: boolean = false;
 
   /**
@@ -61,6 +62,7 @@ export class MorpherTradeSDK {
       this.tokenAddress = config.tokenAddress;
       this.bundler = config.bundler;
       this.paymaster = config.paymaster;
+      this.paymaster_base = config.paymaster_base;
       this.ready = true;
     });
   }
@@ -635,8 +637,6 @@ export class MorpherTradeSDK {
           chainId: walletClient.chain?.id,
         });
         
-        console.log('capabilities', capabilities)
-
         if (capabilities && capabilities?.paymasterService?.supported === true) {
           paymasterWallet = true;
         }
@@ -661,7 +661,7 @@ export class MorpherTradeSDK {
           this.oracleAddress || "0x",
           order_id as TAddress,
           timeOut,
-          this.paymaster
+          this.paymaster_base || this.paymaster
         );
 
         if (callback) {
@@ -1071,13 +1071,15 @@ export class MorpherTradeSDK {
 
     if (
       (!tradeAmount || Number(tradeAmount) == 0) &&
-      (!closePercentage || Number(closePercentage) == 0)
+      (!closePercentage || Number(closePercentage) == 0) &&
+      (!priceAbove || Number(priceAbove) == 0) && 
+      (!priceBelow || Number(priceBelow) == 0)
     ) {
       this.orderCreating = false;
       if (callback) {
         callback({
           result: "error",
-          err: "Must specify either a tradeAmount or a closePercentage",
+          err: "Must specify either a tradeAmount or a closePercentage or a priceAbove / Price Below combination for SLTP orders",
           error_code: 'INVALID_TRADE_AMOUNT'
         });
       }
@@ -1488,7 +1490,6 @@ export class MorpherTradeSDK {
                 chainId: walletClient.chain?.id,
               });
 
-                          console.log('capabilities', capabilities)
               if (
                 capabilities &&
                 capabilities?.paymasterService?.supported === true
@@ -1518,7 +1519,7 @@ export class MorpherTradeSDK {
                 good_until,
                 good_from,
                 timeOut,
-                this.paymaster
+                this.paymaster_base || this.paymaster
               );
             } else {
               order_result = await sendCreateOrderTokenGasless(
@@ -1575,7 +1576,6 @@ export class MorpherTradeSDK {
 							account,
 							chainId: walletClient.chain?.id, 
 						})
-            console.log('capabilities', capabilities)
 
           if (capabilities && capabilities?.paymasterService?.supported === true) {
             paymasterWallet = true;
@@ -1601,7 +1601,7 @@ export class MorpherTradeSDK {
             good_until,
             good_from,
             timeOut,
-            this.paymaster
+            this.paymaster_base || this.paymaster
           );
 
         } else {

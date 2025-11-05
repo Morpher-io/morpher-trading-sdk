@@ -96,6 +96,8 @@ export type TPosition = {
     logo_image?: string;
     name?: string;
     symbol?: string;
+    stop_loss?: string;
+    take_profit?: string;
 };
 export interface TConfig {
     chain_id: number;
@@ -105,6 +107,7 @@ export interface TConfig {
     oracleAddress: `0x${string}`;
     bundler: string;
     paymaster: string;
+    paymaster_base?: string;
 }
 export type TLeaderBoard = {
     id: string;
@@ -198,13 +201,13 @@ export declare const v2Router: trpc.TRPCBuiltRouter<{
      */
     getMarketList: trpc.TRPCQueryProcedure<{
         input: {
-            type?: "unique" | "stock" | "crypto" | "forex" | "position" | "commodity" | "index" | "prediction" | "f1" | "mlb" | undefined;
-            market_id?: string | undefined;
-            cursor?: number | null | undefined;
-        } | undefined;
+            type?: "index" | "position" | "crypto" | "unique" | "stock" | "forex" | "prediction" | "commodity" | "f1" | "mlb";
+            cursor?: number;
+            market_id?: string;
+        };
         output: {
             markets: TMarketData;
-            nextCursor: number | null;
+            nextCursor: number;
         };
         meta: object;
     }>;
@@ -213,8 +216,8 @@ export declare const v2Router: trpc.TRPCBuiltRouter<{
      */
     getMarketData: trpc.TRPCQueryProcedure<{
         input: {
-            eth_address: string;
-            market_id: string;
+            eth_address?: string;
+            market_id?: string;
         };
         output: TMarketDetail;
         meta: object;
@@ -224,11 +227,11 @@ export declare const v2Router: trpc.TRPCBuiltRouter<{
      */
     getOrders: trpc.TRPCQueryProcedure<{
         input: {
-            eth_address: string;
-            tx_hash?: string | undefined;
-            order_id?: string | undefined;
-            market_id?: string | undefined;
-        } | undefined;
+            tx_hash?: string;
+            eth_address?: string;
+            order_id?: string;
+            market_id?: string;
+        };
         output: TORders;
         meta: object;
     }>;
@@ -237,8 +240,8 @@ export declare const v2Router: trpc.TRPCBuiltRouter<{
      */
     getPortfolio: trpc.TRPCQueryProcedure<{
         input: {
-            eth_address: string;
-        } | undefined;
+            eth_address?: string;
+        };
         output: TPortfolio;
         meta: object;
     }>;
@@ -247,10 +250,10 @@ export declare const v2Router: trpc.TRPCBuiltRouter<{
      */
     getPositions: trpc.TRPCQueryProcedure<{
         input: {
-            eth_address: string;
-            market_id?: string | undefined;
-            position_id?: string | undefined;
-        } | undefined;
+            eth_address?: string;
+            market_id?: string;
+            position_id?: string;
+        };
         output: TPosition[];
         meta: object;
     }>;
@@ -259,10 +262,10 @@ export declare const v2Router: trpc.TRPCBuiltRouter<{
      */
     getReturns: trpc.TRPCQueryProcedure<{
         input: {
-            eth_address: string;
-            type?: "d" | "w" | "m" | "y" | undefined;
+            type?: "d" | "y" | "m" | "w";
+            eth_address?: string;
         };
-        output: TPortfolioDataPoint[] | null;
+        output: TPortfolioDataPoint[];
         meta: object;
     }>;
     /**
@@ -270,10 +273,10 @@ export declare const v2Router: trpc.TRPCBuiltRouter<{
      */
     getPositionValue: trpc.TRPCQueryProcedure<{
         input: {
-            eth_address: string;
-            market_id?: string | undefined;
-        } | undefined;
-        output: TPosition | undefined;
+            eth_address?: string;
+            market_id?: string;
+        };
+        output: TPosition;
         meta: object;
     }>;
     /**
@@ -281,11 +284,11 @@ export declare const v2Router: trpc.TRPCBuiltRouter<{
      */
     getPositionSplitValue: trpc.TRPCQueryProcedure<{
         input: {
-            eth_address: string;
-            market_id: string;
-            price_above: string;
-            price_below: string;
-        } | undefined;
+            eth_address?: string;
+            market_id?: string;
+            price_above?: string;
+            price_below?: string;
+        };
         output: TPositionSplit;
         meta: object;
     }>;
@@ -302,8 +305,8 @@ export declare const v2Router: trpc.TRPCBuiltRouter<{
      */
     getContext: trpc.TRPCQueryProcedure<{
         input: {
-            eth_address: string;
-            app: string;
+            app?: string;
+            eth_address?: string;
         };
         output: TContext;
         meta: object;
@@ -313,15 +316,15 @@ export declare const v2Router: trpc.TRPCBuiltRouter<{
      */
     setContext: trpc.TRPCMutationProcedure<{
         input: {
-            eth_address: string;
-            id: string;
-            app: string;
-            user_name?: string | undefined;
-            display_name?: string | undefined;
-            profile_image?: string | undefined;
-            platformType?: string | undefined;
-            clientFid?: number | undefined;
-            added?: boolean | undefined;
+            id?: string;
+            app?: string;
+            eth_address?: string;
+            display_name?: string;
+            added?: boolean;
+            user_name?: string;
+            profile_image?: string;
+            platformType?: string;
+            clientFid?: number;
         };
         output: TContext;
         meta: object;
@@ -331,9 +334,9 @@ export declare const v2Router: trpc.TRPCBuiltRouter<{
      */
     getLeaderboard: trpc.TRPCQueryProcedure<{
         input: {
-            type: "order" | "returns";
-            eth_address: string;
-            app: string;
+            type?: "order" | "returns";
+            app?: string;
+            eth_address?: string;
         };
         output: TLeaderBoard[];
         meta: object;
@@ -343,7 +346,7 @@ export declare const v2Router: trpc.TRPCBuiltRouter<{
      */
     getTrendingMarkets: trpc.TRPCQueryProcedure<{
         input: void;
-        output: TMarketData[];
+        output: TMarketData;
         meta: object;
     }>;
 }>>;

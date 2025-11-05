@@ -20,6 +20,7 @@ export declare class MorpherTradeSDK {
     private clientURLWs;
     private bundler?;
     private paymaster?;
+    private paymaster_base?;
     ready: boolean;
     /**
      * Initialise the trading SDK and fetch the contract addresses and other configuration information from the backend API.
@@ -193,7 +194,7 @@ export declare class MorpherTradeSDK {
         country?: string | undefined;
         market_cap?: number | undefined;
         logo_image?: number | undefined;
-    }>[]>;
+    }>>;
     /**
      * Get the portfolio details for a given ETH address.
      * @param options - The options for fetching the portfolio.
@@ -251,7 +252,7 @@ export declare class MorpherTradeSDK {
         positions: number;
         total: number;
         returns: number;
-    }[] | null>;
+    }[]>;
     /**
      * Fetch the leaderboard information to show where the given ETH address is on the leaderboards and the top users on each leaderboard. The leaderboards are separated by app, i.e., each app has its own leaderboards.
      * @param options - The options for fetching the leaderboard.
