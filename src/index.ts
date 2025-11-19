@@ -1188,6 +1188,18 @@ export class MorpherTradeSDK {
       }
     }
 
+    if (limitOrder && !currentPosition) {
+        if (callback) {
+          callback({
+            result: "error",
+            err: `You cannot create a limit order because you have no position.`,
+            error_code: 'LIMIT_NO_POSITION'
+          });
+        }
+        return;
+
+    }
+
     if (!isCorrectDirection) {
       this.orderCreating = false;
       if (callback) {
@@ -1231,8 +1243,10 @@ export class MorpherTradeSDK {
       open_mph_token_amount = 0;
       if (currentPosition.direction === "long") {
         close_shares_amount = String(currentPosition.long_shares);
+        direction = 'short'
       } else if (currentPosition.direction === "short") {
         close_shares_amount = String(currentPosition.short_shares);
+        direction = 'long'
       }
     } else {
       if (closePercentage && (closePercentage || 0) > 0 && currentPosition) {

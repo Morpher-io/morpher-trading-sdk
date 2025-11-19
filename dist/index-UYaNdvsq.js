@@ -6125,7 +6125,7 @@ async function sb(n, e) {
     });
     return q === "0x" ? { data: void 0 } : { data: q };
   } catch (N) {
-    const k = tw(N), { offchainLookup: L, offchainLookupSignature: M } = await import("./ccip-DNn78hGA.js");
+    const k = tw(N), { offchainLookup: L, offchainLookupSignature: M } = await import("./ccip-Jnh9MeXH.js");
     if (n.ccipRead !== !1 && (k == null ? void 0 : k.slice(0, 10)) === M && v)
       return { data: await L(n, { data: k, to: v }) };
     throw D && (k == null ? void 0 : k.slice(0, 10)) === "0x101bb98d" ? new V6({ factory: d }) : J5(N, {
@@ -31681,7 +31681,15 @@ class hE {
     let m = !1;
     (u && u > 0 || l && l > 0) && (m = !0);
     let x = !0;
-    if (o && o > 0 && y && y.long_shares + y.short_shares > 0 && (a === "long" && y.direction === "short" && (x = !1), a === "short" && y.direction === "long" && (x = !1)), !x) {
+    if (o && o > 0 && y && y.long_shares + y.short_shares > 0 && (a === "long" && y.direction === "short" && (x = !1), a === "short" && y.direction === "long" && (x = !1)), m && !y) {
+      d && d({
+        result: "error",
+        err: "You cannot create a limit order because you have no position.",
+        error_code: "LIMIT_NO_POSITION"
+      });
+      return;
+    }
+    if (!x) {
       this.orderCreating = !1, d && d({
         result: "error",
         err: "You cannot trade in the opposite direction to an existing position. PLease close the existing position first. ",
@@ -31704,7 +31712,7 @@ class hE {
     w || (w = 0);
     let g = "0";
     if (m && y)
-      w = 0, y.direction === "long" ? g = String(y.long_shares) : y.direction === "short" && (g = String(y.short_shares));
+      w = 0, y.direction === "long" ? (g = String(y.long_shares), a = "short") : y.direction === "short" && (g = String(y.short_shares), a = "long");
     else if (f && (f || 0) > 0 && y) {
       if ((f || 0) > 100)
         return;
