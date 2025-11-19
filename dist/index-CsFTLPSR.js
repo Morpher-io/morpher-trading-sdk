@@ -6125,7 +6125,7 @@ async function sb(n, e) {
     });
     return q === "0x" ? { data: void 0 } : { data: q };
   } catch (N) {
-    const k = tw(N), { offchainLookup: L, offchainLookupSignature: M } = await import("./ccip-Jnh9MeXH.js");
+    const k = tw(N), { offchainLookup: L, offchainLookupSignature: M } = await import("./ccip-CAiqTzU3.js");
     if (n.ccipRead !== !1 && (k == null ? void 0 : k.slice(0, 10)) === M && v)
       return { data: await L(n, { data: k, to: v }) };
     throw D && (k == null ? void 0 : k.slice(0, 10)) === "0x101bb98d" ? new V6({ factory: d }) : J5(N, {
@@ -30649,7 +30649,7 @@ const Gv = (n) => ts(Ln(n)), Jt = (n) => {
     client: { public: e, wallet: n }
   }).write.createOrderFromToken(
     [R, D],
-    { chain: e.chain, gas: BigInt(8e5), account: t.address }
+    { chain: e.chain, gas: BigInt(18e5), account: t.address }
   );
   clearTimeout(m);
   const G = await e.waitForTransactionReceipt({ hash: H });

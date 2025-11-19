@@ -1447,7 +1447,7 @@ export const sendCreateOrderToken = async (walletClient: WalletClient, publicCli
     const transaction_hash = await morpherOracleContract.write
         .createOrderFromToken(
             [createOrder as any, tokenPermit as any],
-            { chain: publicClient.chain, gas: BigInt(800000), account: account.address as TAddress }
+            { chain: publicClient.chain, gas: BigInt(1800000), account: account.address as TAddress }
         )
     
     clearTimeout(timeOut);
