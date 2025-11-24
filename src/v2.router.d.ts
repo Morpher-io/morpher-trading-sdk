@@ -179,6 +179,9 @@ export interface TPortfolioDataPoint {
     positions: number;
     total: number;
     returns: number;
+    return_value?: number;
+    invested?: number;
+    returned?: number;
 }
 export declare const v2Router: trpc.TRPCBuiltRouter<{
     ctx: {

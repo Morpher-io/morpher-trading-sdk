@@ -252,6 +252,9 @@ export declare class MorpherTradeSDK {
         positions: number;
         total: number;
         returns: number;
+        return_value?: number | undefined;
+        invested?: number | undefined;
+        returned?: number | undefined;
     }[]>;
     /**
      * Fetch the leaderboard information to show where the given ETH address is on the leaderboards and the top users on each leaderboard. The leaderboards are separated by app, i.e., each app has its own leaderboards.
